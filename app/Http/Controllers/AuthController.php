@@ -13,9 +13,8 @@ class AuthController extends Controller
     public function register(Request $request) {
 
         $validator = Validator::make($request->all(), [
-            'phone' => 'bail|required|unique:users',
             'password' => 'bail|required|min:6',
-            'email' => 'bail|required|email',
+            'email' => 'bail|required|email|unique:users',
         ]);
 
 
@@ -25,12 +24,12 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $check = User::where('ip_address', $request->ip())->first();
+        // $check = User::where('ip_address', $request->ip())->first();
 
-        if ($check) return response(['message' => 'Mỗi user chỉ được đang ký một tài khoản'], 422);
+        // if ($check) return response(['message' => 'Mỗi user chỉ được đang ký một tài khoản'], 422);
 
         $data = $request->all();
-        $data['ip_address'] = $request->ip();
+        // $data['ip_address'] = $request->ip();
 
         $user = User::create($data);
 
@@ -44,7 +43,7 @@ class AuthController extends Controller
     }
 
     public function login (Request $request) {
-        $credentials = ['phone' => $request->phone, 'password' => $request->password];
+        $credentials = ['email' => $request->email, 'password' => $request->password];
 
         if (!auth()->attempt($credentials)) {
             return response()->json(['message' => 'Unauthorized'], 401);
