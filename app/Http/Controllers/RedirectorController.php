@@ -4,9 +4,13 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+use App\Http\Requests\RedirectorRequest as MainRequest;
+
 use App\Models\Redirector;
 use App\Models\Mission;
 use App\Models\Keyword;
+
+use Carbon\Carbon;
 
 class RedirectorController extends Controller
 {
@@ -17,65 +21,63 @@ class RedirectorController extends Controller
         $this->model = $redirector;
     }
 
-    public function show (Request $request, $slug) {
+    public function getMission (Request $request) {
 
-        $redirector = $this->model->where('slug', $slug)->first();
+        $ipAddress = $request->ip_address ? $request->ip_address : '';
 
-        if ($redirector) {
+        if (!$ipAddress) return response(['message' => 'Not Found'], 404);
 
-            $mission = Mission::where('ip', $request->ip())->where('status', 0)->first();
+        $mission = Mission::with('keyword')->where('ip', $ipAddress)->where('status', 0)->first();
 
-            if ($mission) return $mission;
+        if ($mission) return $mission;
 
-            $notAllowKeyWordIds = Mission::query()
-                        ->where('ip', $request->ip())
-                        ->where('status', 1)->get()
-                        ->filter(function($mission) {
+        $notAllowKeyWordIds = Mission::query()
+                    ->where('ip', $ipAddress)
+                    ->where('status', 1)->get()
+                    ->filter(function($mission) {
 
-                            $taskDate = Carbon::createFromFormat('Y-m-d H:i:s', $mission->updated_at);
+                        $taskDate = Carbon::createFromFormat('Y-m-d H:i:s', $mission->updated_at);
 
-                            $checkDate = Carbon::now()->subDays(3);
+                        $checkDate = Carbon::now()->subDays(3);
 
-                            if ($checkDate->lt($taskDate)) {
-                                return $mission;
-                            }
-                        })
-                        ->map(function($mission){
-                            return $mission->keyword_id;
-                        })
-                        ->toArray();
-            $keyword = Keyword::query()
+                        if ($checkDate->lt($taskDate)) {
+                            return $mission;
+                        }
+                    })
+                    ->map(function($mission){
+                        return $mission->keyword_id;
+                    })
+                    ->toArray();
+
+        $keyword = Keyword::query()
+                    ->where('status', 1)
+                    ->when(count($notAllowKeyWordIds) > 0, function($query) use($notAllowKeyWordIds) {
+                        $query->whereNotIn('id', $notAllowKeyWordIds);
+                    })
+                    ->inRandomOrder()->limit(1)->first();
+
+        if ($keyword) {
+
+            $mission = Mission::query()
                         ->where('status', 1)
-                        ->when(count($missionIds) > 0, function($query) use($notAllowKeyWordIds) {
-                            $query->whereNotIn('id', $notAllowKeyWordIds);
-                        })
-                        ->inRandomOrder()->limit(1)->first();
+                        ->where('keyword_id', $keyword->id)
+                        ->where('ip', $ipAddress)
+                        ->first();
 
-            if ($keyword) {
+            if ($mission) {
 
-                $mission = Mission::query()
-                            ->where('status', 1)
-                            ->where('keyword_id', $keyword->id)
-                            ->where('ip', $request->ip())
-                            ->first();
-
-                if ($mission) {
-
-                    $mission->update(['status', 0, 'code' => null]);
-
-                    return $mission->load('keyword');
-                }
-
-                $mission = Mission::create([
-                    'keyword_id' => $keyword->id,
-                    'status' => 0,
-                    'ip' => $request->ip()
-                ]);
+                $mission->update(['status', 0, 'code' => null]);
 
                 return $mission->load('keyword');
             }
 
-            return response(['message' => 'There is no mission now'], 404);
+            $mission = Mission::create([
+                'keyword_id' => $keyword->id,
+                'status' => 0,
+                'ip' => $ipAddress
+            ]);
+
+            return $mission->load('keyword');
         }
 
         return response(['message' => 'Not Found'], 404);
@@ -83,5 +85,73 @@ class RedirectorController extends Controller
 
     public function getMissionCode (Request $request) {
 
+        $code = '';
+
+        $ipAddress = $request->ip_address ? $request->ip_address : '';
+
+        $domain = $request->domain ? $request->domain : '';
+
+        if (!$ipAddress || !$domain) return response(['message' => 'Not Found'], 404);
+
+        $missions = Mission::with('keyword')->where('ip', $ipAddress)->where('status', 0)->get();
+
+        if ($missions && count($missions) > 0) {
+
+            foreach ($missions as $mission) {
+
+                if (rtrim($mission->keyword->url, '/') === rtrim($domain, '/')) {
+
+                    $code = uniqid();
+
+                    $mission->update(['code' => $code]);
+
+                    break;
+                }
+            }
+        }
+
+        return response(['code' => $code]);
+    }
+
+    public function confirmMission (Request $request) {
+
+        $ipAddress = $request->ip_address ? $request->ip_address : '';
+
+        $code = $request->code ? $request->code : '';
+
+        $slug = $request->slug ? $request->slug : '';
+
+        if (!$ipAddress || !$code) return response(['message' => 'Not Found'], 404);
+
+        $mission = Mission::where('ip', $ipAddress)->where('code', $code)->first();
+
+        if ($mission) {
+
+            $mission->update(['status' => 1]);
+
+            $redirector = $this->model->where('slug', $slug)->first();
+
+            if ($redirector) {
+
+                return \response(['source' => $redirector->url]);
+            }
+
+            $redirector = $this->model->inRandomOrder()->limit(1)->first();
+
+            return \response(['source' => $redirector->url]);
+        }
+
+        return response(['message' => 'Mã không chính xác'], 401);
+    }
+
+    public function store (MainRequest $request) {
+
+        $data = $request->all();
+
+        if (auth()->user() && auth()->user()->id) $data['created_by'] = auth()->user()->id;
+
+        $item = $this->model->create($data);
+
+        return $item;
     }
 }

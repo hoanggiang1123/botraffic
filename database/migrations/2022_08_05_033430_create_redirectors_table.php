@@ -16,8 +16,9 @@ return new class extends Migration
         Schema::create('redirectors', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('slug');
+            $table->string('slug')->unique();
             $table->string('url');
+            $table->unsignedBigInteger('created_by');
             $table->timestamps();
         });
     }

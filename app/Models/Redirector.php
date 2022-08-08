@@ -12,11 +12,11 @@ class Redirector extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'url'
+        'name', 'url', 'slug', 'created_by'
     ];
 
-    public function setNameAttribute ($name) {
-        $this->attributes['name'] = $name;
-        $this->attributes['slug'] = Str::slug($name);
-    }
+    // public function setNameAttribute ($name) {
+    //     $this->attributes['name'] = $name;
+    //     $this->attributes['slug'] = Str::slug($name);
+    // }
 }

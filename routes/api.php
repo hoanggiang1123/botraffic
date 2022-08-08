@@ -29,6 +29,13 @@ Route::group(['prefix' => 'auth'], function() {
     Route::post('/change-password', [AuthController::class, 'changePassword'])->middleware('auth:sanctum');
 });
 
-Route::group(['prefix' => 'link'], function() {
-    Route::get('/{slug}', [RedirectorController::class, 'show']);
+// Route::group(['prefix' => 'mission'], function() {
+//     Route::post('/', [RedirectorController::class, 'getMission']);
+// });
+Route::group(['prefix' => 'redirector'], function() {
+    Route::post('/', [RedirectorController::class, 'store']);
+    Route::post('/get-mission', [RedirectorController::class, 'getMission']);
+    Route::post('/get-mission-code', [RedirectorController::class, 'getMissionCode']);
+    Route::post('/confirm-mission', [RedirectorController::class, 'confirmMission']);
 });
+
