@@ -9,8 +9,11 @@ use App\Http\Requests\RedirectorRequest as MainRequest;
 use App\Models\Redirector;
 use App\Models\Mission;
 use App\Models\Keyword;
+use App\Models\Tracker;
 
 use Carbon\Carbon;
+
+use Browser;
 
 class RedirectorController extends Controller
 {
@@ -123,9 +126,24 @@ class RedirectorController extends Controller
 
         if (!$ipAddress || !$code) return response(['message' => 'Not Found'], 404);
 
-        $mission = Mission::where('ip', $ipAddress)->where('code', $code)->first();
+        $mission = Mission::with('keyword')->where('ip', $ipAddress)->where('code', $code)->first();
 
         if ($mission) {
+
+            $deviceType = Browser::deviceType();
+            $deviceName = Browser::deviceFamily();
+            $browser = Browser::browserFamily();
+            $os = Browser::platformFamily();
+
+            $tracker = Tracker::create([
+                'ip' => $ipAddress,
+                'keyword' => $mission->keyword->name,
+                'url' => $mission->keyword->url,
+                'device_type' => $deviceType,
+                'device_name' => $deviceName,
+                'browser' => $browser,
+                'os' => $os
+            ]);
 
             $mission->update(['status' => 1]);
 
