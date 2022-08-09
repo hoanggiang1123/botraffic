@@ -107,4 +107,34 @@ class AuthController extends Controller
             'user' =>  auth()->user()
         ]);
     }
+
+    public function socialLogin (Request $request) {
+
+        $email = $request->email ?  $request->email : null;
+        $name = $request->name ? $request->name : null;
+        $picture = $request->picture ? $request->picture : null;
+
+        $user = User::where('email', $email)->first();
+
+        if ($user) {
+            auth()->login($user);
+
+            $token = $user->createToken($user->id)->plainTextToken;
+
+            return $this->respondWithToken($token);
+        }
+        else {
+            $user = User::create(['name' =>  $name, 'email' => $email, 'picture' => $picture, 'password' => 'social_login']);
+
+            if ($user) {
+                auth()->login($user);
+
+                $token = $user->createToken($user->id)->plainTextToken;
+
+                return $this->respondWithToken($token);
+            }
+        }
+
+        return response(['message' => 'Unprocess Entity'], 422);
+    }
 }
