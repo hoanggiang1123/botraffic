@@ -27,6 +27,7 @@ Route::group(['prefix' => 'auth'], function() {
     Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
     Route::get('/me', [AuthController::class, 'me'])->middleware('auth:sanctum');
     Route::post('/change-password', [AuthController::class, 'changePassword'])->middleware('auth:sanctum');
+    Route::post('/social-login', [AuthController::class, 'socialLogin']);
 });
 
 // Route::group(['prefix' => 'mission'], function() {
