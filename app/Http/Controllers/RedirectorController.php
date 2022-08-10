@@ -142,7 +142,8 @@ class RedirectorController extends Controller
                 'device_type' => $deviceType,
                 'device_name' => $deviceName,
                 'browser' => $browser,
-                'os' => $os
+                'os' => $os,
+                'user_id' => auth()->user() && auth()->user()->id ? auth()->user()->id : null
             ]);
 
             $mission->update(['status' => 1]);

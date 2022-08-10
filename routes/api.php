@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RedirectorController;
+use App\Http\Controllers\KeywordController;
 
 /*
 |--------------------------------------------------------------------------
@@ -38,5 +39,12 @@ Route::group(['prefix' => 'redirector'], function() {
     Route::post('/get-mission', [RedirectorController::class, 'getMission']);
     Route::post('/get-mission-code', [RedirectorController::class, 'getMissionCode']);
     Route::post('/confirm-mission', [RedirectorController::class, 'confirmMission']);
+});
+
+Route::group(['prefix' => 'keyword'], function() {
+    Route::get('/', [KeywordController::class, 'index']);
+    Route::post('/', [KeywordController::class, 'store']);
+    Route::put('/{id}', [KeywordController::class, 'update']);
+    Route::post('/destroy', [KeywordController::class, 'destroy']);
 });
 
