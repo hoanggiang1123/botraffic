@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+use App\Http\Resources\KeywordCollection;
+
 class Keyword extends Model
 {
     use HasFactory;
@@ -39,7 +41,7 @@ class Keyword extends Model
 
         })->orderBy($orderBy, $order)->paginate($perPage);
 
-        if ($resp) $result = $resp;
+        if ($resp) $result = new KeywordCollection($resp);
 
         return $result;
     }
