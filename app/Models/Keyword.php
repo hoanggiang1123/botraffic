@@ -29,7 +29,7 @@ class Keyword extends Model
 
         $order = isset($params['order']) ? $params['order'] : 'desc';
 
-        $resp = self::query()
+        $resp = self::query()->with('user')
 
         ->when(isset($params['name']) && $params['name'] !== '', function ($query) use ($params) {
 

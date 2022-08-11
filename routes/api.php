@@ -41,7 +41,7 @@ Route::group(['prefix' => 'redirector'], function() {
     Route::post('/confirm-mission', [RedirectorController::class, 'confirmMission']);
 });
 
-Route::group(['prefix' => 'keyword'], function() {
+Route::group(['prefix' => 'keyword', 'middleware' => 'auth:sanctum'], function() {
     Route::get('/', [KeywordController::class, 'index']);
     Route::post('/', [KeywordController::class, 'store']);
     Route::put('/{id}', [KeywordController::class, 'update']);
