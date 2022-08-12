@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 
 use App\Models\Keyword as MainModel;
+use App\Http\Requests\KeywordRequest as MainRequest;
 
 
 class KeywordController extends Controller

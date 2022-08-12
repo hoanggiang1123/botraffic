@@ -12,7 +12,7 @@ class Keyword extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'url', 'picture', 'time_on_site'
+        'name', 'url', 'picture', 'time_on_site', 'status'
     ];
 
     public function user () {
