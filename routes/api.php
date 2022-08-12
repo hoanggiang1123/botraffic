@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RedirectorController;
 use App\Http\Controllers\KeywordController;
+use App\Http\Controllers\MediaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -46,5 +47,9 @@ Route::group(['prefix' => 'keyword', 'middleware' => 'auth:sanctum'], function()
     Route::post('/', [KeywordController::class, 'store']);
     Route::put('/{id}', [KeywordController::class, 'update']);
     Route::post('/destroy', [KeywordController::class, 'destroy']);
+});
+
+Route::group(['prefix' => 'media', 'middleware' => 'auth:sanctum'], function() {
+    Route::post('/', [MediaController::class, 'index']);
 });
 
