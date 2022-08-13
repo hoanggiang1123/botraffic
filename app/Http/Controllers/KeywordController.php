@@ -24,7 +24,11 @@ class KeywordController extends Controller
 
     public function store (MainRequest $request) {
 
-        $item = $this->model->create($request->all());
+        $data = $request->all();
+
+        $data['created_by'] = auth()->user()->id;
+
+        $item = $this->model->create($data);
 
         if ($item) {
             return $item;
@@ -64,7 +68,7 @@ class KeywordController extends Controller
 
     public function show (Request $request, $id) {
 
-        $keyword = $this->model->withCount('missions')->where('id', $id)->first();
+        $keyword = $this->model->withCount('trackers')->where('id', $id)->first();
 
         if ($keyword) {
             return $keyword;

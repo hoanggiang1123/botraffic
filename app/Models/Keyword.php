@@ -12,7 +12,7 @@ class Keyword extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'url', 'picture', 'time_on_site', 'status'
+        'name', 'url', 'picture', 'time_on_site', 'status', 'created_by'
     ];
 
     public function user () {
@@ -21,6 +21,10 @@ class Keyword extends Model
     public function missions () {
         return $this->hasMany(Mission::class, 'keyword_id');
     }
+    public function trackers () {
+        return $this->hasMany(Tracker::class, 'keyword_id');
+    }
+
 
     public function listItems ($params) {
 

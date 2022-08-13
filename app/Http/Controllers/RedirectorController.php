@@ -137,8 +137,7 @@ class RedirectorController extends Controller
 
             $tracker = Tracker::create([
                 'ip' => $ipAddress,
-                'keyword' => $mission->keyword->name,
-                'url' => $mission->keyword->url,
+                'keyword_id' => $mission->keyword->id,
                 'device_type' => $deviceType,
                 'device_name' => $deviceName,
                 'browser' => $browser,
@@ -150,14 +149,18 @@ class RedirectorController extends Controller
 
             $redirector = $this->model->where('slug', $slug)->first();
 
-            if ($redirector) {
+            if (!$redirector) {
 
+                $redirector = $this->model->inRandomOrder()->limit(1)->first();
+            }
+
+            if ($redirector) {
+                $tracker->update(['redirector_id' => $redirector->id]);
                 return \response(['source' => $redirector->url]);
             }
 
-            $redirector = $this->model->inRandomOrder()->limit(1)->first();
+            return response(['source' => null]);
 
-            return \response(['source' => $redirector->url]);
         }
 
         return response(['message' => 'Mã không chính xác'], 401);

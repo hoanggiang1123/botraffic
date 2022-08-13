@@ -8,6 +8,7 @@ use App\Http\Controllers\RedirectorController;
 use App\Http\Controllers\KeywordController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\MissionController;
+use App\Http\Controllers\TrackerController;
 
 
 /*
@@ -62,5 +63,9 @@ Route::group(['prefix' => 'mission', 'middleware' => 'auth:sanctum'], function()
 
 Route::group(['prefix' => 'media', 'middleware' => 'auth:sanctum'], function() {
     Route::post('/', [MediaController::class, 'index']);
+});
+
+Route::group(['prefix' => 'tracker', 'middleware' => 'auth:sanctum'], function() {
+    Route::get('/', [TrackerController::class, 'index']);
 });
 

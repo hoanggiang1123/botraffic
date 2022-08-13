@@ -33,13 +33,13 @@ class KeywordRequest extends FormRequest
     {
         $id = $this->id ? $this->id : '';
 
-        $name = $slug = $picutre = '';
+        $name = $url = $picture = '';
 
         switch ($id) {
             case '':
                 $name = "bail|required";
                 $url = "bail|required|url";
-                $picutre = "bail|required";
+                $picture = "bail|required";
                 break;
             default:
                 $url = "bail|url";
@@ -50,7 +50,7 @@ class KeywordRequest extends FormRequest
         return [
             'name' => $name,
             'url' => $url,
-            'picutre' => $picutre
+            'picture' => $picture
         ];
     }
 
