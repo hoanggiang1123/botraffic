@@ -18,6 +18,9 @@ class Keyword extends Model
     public function user () {
         return $this->belongsTo(User::class, 'created_by');
     }
+    public function missions () {
+        return $this->hasMany(Mission::class, 'keyword_id');
+    }
 
     public function listItems ($params) {
 
@@ -29,8 +32,15 @@ class Keyword extends Model
 
         $order = isset($params['order']) ? $params['order'] : 'desc';
 
+        $countMission = isset($params['count_mission']) ? $params['count_mission'] : '';
+
         $resp = self::query()->with('user')
 
+        ->when($countMission, function ($query){
+
+            return $query->withCount('missions');
+
+        })
         ->when(isset($params['name']) && $params['name'] !== '', function ($query) use ($params) {
 
             return $query->where('name', 'like', '%' .$params['name']. '%');

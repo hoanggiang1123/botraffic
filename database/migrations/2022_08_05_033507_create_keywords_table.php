@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('picture');
             $table->string('time_on_site')->default(60);
             $table->integer('status')->default(1);
+            $table->unsignedBigInteger('created_by')->nullable();
             $table->timestamps();
         });
     }

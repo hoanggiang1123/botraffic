@@ -7,6 +7,8 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RedirectorController;
 use App\Http\Controllers\KeywordController;
 use App\Http\Controllers\MediaController;
+use App\Http\Controllers\MissionController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -43,10 +45,19 @@ Route::group(['prefix' => 'redirector'], function() {
 });
 
 Route::group(['prefix' => 'keyword', 'middleware' => 'auth:sanctum'], function() {
+    Route::get('/{id}', [KeywordController::class, 'show']);
     Route::get('/', [KeywordController::class, 'index']);
     Route::post('/', [KeywordController::class, 'store']);
     Route::put('/{id}', [KeywordController::class, 'update']);
     Route::post('/destroy', [KeywordController::class, 'destroy']);
+});
+
+Route::group(['prefix' => 'mission', 'middleware' => 'auth:sanctum'], function() {
+    Route::get('/{id}', [MissionController::class, 'show']);
+    Route::get('/', [MissionController::class, 'index']);
+    Route::post('/', [MissionController::class, 'store']);
+    Route::put('/{id}', [MissionController::class, 'update']);
+    Route::post('/destroy', [MissionController::class, 'destroy']);
 });
 
 Route::group(['prefix' => 'media', 'middleware' => 'auth:sanctum'], function() {

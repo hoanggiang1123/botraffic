@@ -4,11 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
-use App\Models\Keyword as MainModel;
-use App\Http\Requests\KeywordRequest as MainRequest;
+use App\Models\Mission as MainModel;
+use App\Http\Requests\MissionRequest as MainRequest;
 
-
-class KeywordController extends Controller
+class MissionController extends Controller
 {
     protected $model;
 
@@ -64,9 +63,9 @@ class KeywordController extends Controller
 
     public function show (Request $request, $id) {
 
-        $keyword = $this->model->withCount('missions')->where('id', $id)->first();
+        $keyword = $this->model->where('id', $id)->first();
 
-        if ($keyword) {
+        if ($keyowrd) {
             return $keyword;
         }
 
