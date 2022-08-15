@@ -24,6 +24,42 @@ class RedirectorController extends Controller
         $this->model = $redirector;
     }
 
+    public function index (Request $request) {
+        return $this->model->listItems($request->all());
+    }
+
+    public function store (MainRequest $request) {
+
+        $data = $request->all();
+
+        $data['created_by'] = auth()->user()->id;
+
+        $item = $this->model->create($data);
+
+        if ($item) {
+            return $item;
+        }
+
+        return response(['message' => 'Unprocess Entity'], 422);
+    }
+
+    public function update (MainRequest $request, $id) {
+
+        $item = $this->model->where('id', $id)->first();
+
+        if ($item) {
+
+            $update = $item->update($request->all());
+
+            if ($update) return $update;
+
+            return response(['message' => 'Unprocess Entity'], 422);
+
+        }
+
+        return response(['message' => 'Not Found'], 404);
+    }
+
     public function getMission (Request $request) {
 
         $ipAddress = $request->ip_address ? $request->ip_address : '';
@@ -166,14 +202,14 @@ class RedirectorController extends Controller
         return response(['message' => 'Mã không chính xác'], 401);
     }
 
-    public function store (MainRequest $request) {
+    // public function store (MainRequest $request) {
 
-        $data = $request->all();
+    //     $data = $request->all();
 
-        if (auth()->user() && auth()->user()->id) $data['created_by'] = auth()->user()->id;
+    //     if (auth()->user() && auth()->user()->id) $data['created_by'] = auth()->user()->id;
 
-        $item = $this->model->create($data);
+    //     $item = $this->model->create($data);
 
-        return $item;
-    }
+    //     return $item;
+    // }
 }

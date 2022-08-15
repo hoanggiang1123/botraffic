@@ -35,14 +35,18 @@ Route::group(['prefix' => 'auth'], function() {
     Route::post('/social-login', [AuthController::class, 'socialLogin']);
 });
 
-// Route::group(['prefix' => 'mission'], function() {
-//     Route::post('/', [RedirectorController::class, 'getMission']);
-// });
-Route::group(['prefix' => 'redirector'], function() {
+
+Route::group(['prefix' => 'redirector', 'middleware' => 'auth:sanctum'], function() {
+    Route::get('/{id}', [RedirectorController::class, 'show']);
+    Route::get('/', [RedirectorController::class, 'index']);
     Route::post('/', [RedirectorController::class, 'store']);
-    Route::post('/get-mission', [RedirectorController::class, 'getMission']);
-    Route::post('/get-mission-code', [RedirectorController::class, 'getMissionCode']);
-    Route::post('/confirm-mission', [RedirectorController::class, 'confirmMission']);
+    Route::put('/{id}', [RedirectorController::class, 'update']);
+    Route::post('/destroy', [RedirectorController::class, 'destroy']);
+
+    // Route::post('/', [RedirectorController::class, 'store']);
+    // Route::post('/get-mission', [RedirectorController::class, 'getMission']);
+    // Route::post('/get-mission-code', [RedirectorController::class, 'getMissionCode']);
+    // Route::post('/confirm-mission', [RedirectorController::class, 'confirmMission']);
 });
 
 Route::group(['prefix' => 'keyword', 'middleware' => 'auth:sanctum'], function() {
