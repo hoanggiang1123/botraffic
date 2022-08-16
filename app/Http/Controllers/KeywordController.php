@@ -28,6 +28,10 @@ class KeywordController extends Controller
 
         $data['created_by'] = auth()->user()->id;
 
+        if (auth()->user()->role !== 'admin' && isset($data['approve'])) {
+            unset($data['approve']);
+        }
+
         $item = $this->model->create($data);
 
         if ($item) {
@@ -43,7 +47,13 @@ class KeywordController extends Controller
 
         if ($item) {
 
-            $update = $item->update($request->all());
+            $data = $request->all();
+
+            if (auth()->user()->role !== 'admin' && isset($data['approve'])) {
+                unset($data['approve']);
+            }
+
+            $update = $item->update($data);
 
             if ($update) return $update;
 
