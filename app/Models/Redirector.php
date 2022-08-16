@@ -14,7 +14,7 @@ class Redirector extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'url', 'slug', 'created_by'
+        'name', 'url', 'slug', 'created_by', 'title', 'image', 'keywords', 'description', 'safe_redirect'
     ];
 
     // public function setNameAttribute ($name) {
@@ -28,6 +28,10 @@ class Redirector extends Model
 
     public function missions () {
         return $this->hasMany(Mission::class, 'redirector_id');
+    }
+
+    public function trackers () {
+        return $this->hasMany(Tracker::class, 'redirector_id');
     }
 
     public function listItems ($params) {

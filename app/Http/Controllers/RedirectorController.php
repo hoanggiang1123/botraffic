@@ -28,6 +28,17 @@ class RedirectorController extends Controller
         return $this->model->listItems($request->all());
     }
 
+    public function show (Request $request, $id) {
+
+        $redirector = $this->model->withCount('trackers')->where('id', $id)->first();
+
+        if ($redirector) {
+            return $redirector;
+        }
+
+        return \response(['message' => 'Not Found'], 404);
+    }
+
     public function store (MainRequest $request) {
 
         $data = $request->all();
