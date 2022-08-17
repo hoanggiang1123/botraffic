@@ -73,3 +73,9 @@ Route::group(['prefix' => 'tracker', 'middleware' => 'auth:sanctum'], function()
     Route::get('/', [TrackerController::class, 'index']);
 });
 
+use App\CrawMeta\CrawMeta;
+
+Route::get('test', function() {
+    $resp = (new CrawMeta)->getMeta('https://tiencuocmienphi.com/');
+    return $resp;
+});
