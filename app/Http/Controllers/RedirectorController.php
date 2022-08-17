@@ -14,6 +14,7 @@ use App\Models\Tracker;
 use Carbon\Carbon;
 
 use Browser;
+use App\CrawMeta\CrawMeta;
 
 class RedirectorController extends Controller
 {
@@ -45,6 +46,11 @@ class RedirectorController extends Controller
 
         $data['created_by'] = auth()->user()->id;
 
+        if (auth()->user()->role === 'admin' && isset($data['safe_redirect']) && $data['safe_redirect'] === 1) {
+            $meta = (new CrawMeta)->getMeta($data['url']);
+            $data = array_merge($data, $meta);
+        }
+
         $item = $this->model->create($data);
 
         if ($item) {
@@ -60,7 +66,14 @@ class RedirectorController extends Controller
 
         if ($item) {
 
-            $update = $item->update($request->all());
+            $data = $request->all();
+
+            if (auth()->user()->role === 'admin' && isset($data['safe_redirect']) && $data['safe_redirect'] === 1) {
+                $meta = (new CrawMeta)->getMeta($data['url']);
+                $data = array_merge($data, $meta);
+            }
+
+            $update = $item->update($data);
 
             if ($update) return $update;
 
