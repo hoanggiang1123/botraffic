@@ -14,7 +14,7 @@ class Redirector extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'url', 'slug', 'created_by', 'title', 'image', 'keywords', 'description', 'safe_redirect'
+        'name', 'url', 'slug', 'created_by', 'title', 'image', 'keywords', 'description', 'safe_redirect', 'status'
     ];
 
     // public function setNameAttribute ($name) {
@@ -50,6 +50,15 @@ class Redirector extends Model
 
         $createdBy = isset($params['created_by']) ? $params['created_by'] : '';
 
+        $url = isset($params['url']) ? $params['url'] : '';
+
+        $userName = isset($params['user']) ? $params['user'] : '';
+
+        $status = isset($params['status']) ? $params['status'] : '';
+
+        $safeRedirect = isset($params['safe_redirect']) ? $params['safe_redirect'] : '';
+
+
         $resp = self::query()->with('user')
 
         ->when($countMission, function ($query){
@@ -61,11 +70,35 @@ class Redirector extends Model
 
             return $query->where('name', 'like', '%' .$name. '%');
 
-        })->when($createdBy !== '', function ($query) use ($createdBy) {
+        })
+        ->when($url !== '', function ($query) use ($url) {
+
+            return $query->where('url', 'like', '%' .$url. '%');
+
+        })
+        ->when($userName !== '', function ($query) use ($userName) {
+
+            return $query->whereHas('user', function($query) use ($userName) {
+                $query->where('name', 'like', '%' . $userName .'%');
+            });
+
+        })
+        ->when($status !== '', function ($query) use ($status) {
+
+            return $query->where('status', $status);
+
+        })
+        ->when($safeRedirect !== '', function ($query) use ($safeRedirect) {
+
+            return $query->where('safe_redirect', $safeRedirect);
+
+        })
+        ->when($createdBy !== '', function ($query) use ($createdBy) {
 
             return $query->where('created_by', $createdBy);
 
-        })->orderBy($orderBy, $order)->paginate($perPage);
+        })
+        ->orderBy($orderBy, $order)->paginate($perPage);
 
         if ($resp) $result = new RedirectorCollection($resp);
 

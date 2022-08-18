@@ -58,6 +58,8 @@ Route::group(['prefix' => 'keyword', 'middleware' => 'auth:sanctum'], function()
 });
 
 Route::group(['prefix' => 'mission', 'middleware' => 'auth:sanctum'], function() {
+    Route::get('/take', [MissionController::class, 'takeMission']);
+    Route::get('/get', [MissionController::class, 'getMission']);
     Route::get('/{id}', [MissionController::class, 'show']);
     Route::get('/', [MissionController::class, 'index']);
     Route::post('/', [MissionController::class, 'store']);

@@ -38,6 +38,16 @@ class Keyword extends Model
 
         $countMission = isset($params['count_mission']) ? $params['count_mission'] : '';
 
+        $name = isset($params['name']) ? $params['name'] : '';
+
+        $url = isset($params['url']) ? $params['url'] : '';
+
+        $userName = isset($params['user']) ? $params['user'] : '';
+
+        $status = isset($params['status']) ? $params['status'] : '';
+
+        $approve = isset($params['approve']) ? $params['approve'] : '';
+
         $resp = self::query()->with('user')
 
         ->when($countMission, function ($query){
@@ -45,15 +55,35 @@ class Keyword extends Model
             return $query->withCount('missions');
 
         })
-        ->when(isset($params['name']) && $params['name'] !== '', function ($query) use ($params) {
+        ->when($name !== '', function ($query) use ($name) {
 
-            return $query->where('name', 'like', '%' .$params['name']. '%');
+            return $query->where('name', 'like', '%' .$name. '%');
 
-        })->when(isset($params['description'])  && $params['description'] !== '', function ($query) use ($params) {
+        })
+        ->when($url !== '', function ($query) use ($url) {
 
-            return $query->where('description','like', '%' .$params['description']. '%');
+            return $query->where('url','like', '%' .$url. '%');
 
-        })->orderBy($orderBy, $order)->paginate($perPage);
+        })
+
+        ->when($userName !== '', function ($query) use ($userName) {
+
+            return $query->whereHas('user', function($query) use ($userName) {
+                $query->where('name', 'like', '%' . $userName .'%');
+            });
+
+        })
+        ->when($status !== '', function ($query) use ($status) {
+
+            return $query->where('status', $status);
+
+        })
+        ->when($approve !== '', function ($query) use ($approve) {
+
+            return $query->where('approve', $approve);
+
+        })
+        ->orderBy($orderBy, $order)->paginate($perPage);
 
         if ($resp) $result = new KeywordCollection($resp);
 
