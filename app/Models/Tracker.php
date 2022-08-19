@@ -55,7 +55,7 @@ class Tracker extends Model
 
         $resp = self::query()
 
-        ->when(count($withs) > 0, function($query) {
+        ->when(count($withs) > 0, function($query) use ($withs) {
 
             return $query->with($withs);
         })

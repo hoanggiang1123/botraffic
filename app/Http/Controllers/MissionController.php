@@ -9,6 +9,8 @@ use App\Http\Requests\MissionRequest as MainRequest;
 
 use App\Models\Keyword;
 use App\Models\Tracker;
+use App\Models\Redirector;
+use App\Models\User;
 
 use Browser;
 
@@ -168,13 +170,23 @@ class MissionController extends Controller
 
         if (!$ipAddress || !$code) return response(['message' => 'Not Found'], 404);
 
-        $mission = $this->model->with('keyword')->where('ip', $ipAddress)->where('code', $code)->first();
+        $mission = $this->model->with('keyword')
+                ->when(auth()->user(), function($query) {
+                    $query->where('created_by', auth()->user()->id);
+                })
+                ->where('ip', $ipAddress)
+                ->where('code', $code)
+                ->first();
 
         if ($mission) {
 
             $mission->update(['status' => 1]);
 
             if (auth()->user()) auth()->user()->increment('point');
+
+            if (auth()->user()->refer_id) {
+                User::where('id', auth()->user()->refer_id)->increment('refer_point');
+            }
 
             $deviceType = Browser::deviceType();
             $deviceName = Browser::deviceFamily();
@@ -193,7 +205,7 @@ class MissionController extends Controller
 
             if ($slug !== '') {
 
-                $redirector = $this->model->where('slug', $slug)->first();
+                $redirector = Redirector::where('slug', $slug)->first();
 
                 if ($redirector) {
 
@@ -203,7 +215,7 @@ class MissionController extends Controller
                 }
                 else {
 
-                    $redirector = $this->model->inRandomOrder()->limit(1)->first();
+                    $redirector = Redirector::inRandomOrder()->limit(1)->first();
 
                     if ($redirector) {
 
@@ -220,5 +232,10 @@ class MissionController extends Controller
         }
 
         return response(['message' => 'Mã không chính xác'], 401);
+    }
+
+    public function getMissionComplete (Request $request) {
+
+        return (new Tracker)->listItems($request->all());
     }
 }
