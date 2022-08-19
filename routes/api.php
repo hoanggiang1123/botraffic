@@ -59,11 +59,21 @@ Route::group(['prefix' => 'keyword', 'middleware' => 'auth:sanctum'], function()
 
 Route::group(['prefix' => 'mission', 'middleware' => 'auth:sanctum'], function() {
     Route::get('/take', [MissionController::class, 'takeMission']);
+
     Route::get('/get', [MissionController::class, 'getMission']);
+
+    Route::get('/code', [MissionController::class, 'getMissionCode'])->withoutMiddleware('auth:sanctum');
+
+    Route::get('/confirm', [MissionController::class, 'getConfirmMission']);
+
     Route::get('/{id}', [MissionController::class, 'show']);
+
     Route::get('/', [MissionController::class, 'index']);
+
     Route::post('/', [MissionController::class, 'store']);
+
     Route::put('/{id}', [MissionController::class, 'update']);
+
     Route::post('/destroy', [MissionController::class, 'destroy']);
 });
 

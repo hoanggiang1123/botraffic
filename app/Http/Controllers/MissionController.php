@@ -8,6 +8,9 @@ use App\Models\Mission as MainModel;
 use App\Http\Requests\MissionRequest as MainRequest;
 
 use App\Models\Keyword;
+use App\Models\Tracker;
+
+use Browser;
 
 class MissionController extends Controller
 {
@@ -123,6 +126,99 @@ class MissionController extends Controller
             return $mission->load('keyword');
         }
 
-        return NULL;
+        return response(['keyword' => null]);
+    }
+
+    public function getMissionCode (Request $request) {
+
+        $code = '';
+
+        $ipAddress = $request->ip_address ? $request->ip_address : '';
+
+        $domain = $request->domain ? $request->domain : '';
+
+        if (!$ipAddress || !$domain) return response(['message' => 'Not Found'], 404);
+
+        $missions = $this->model->with('keyword')->where('ip', $ipAddress)->where('status', 0)->get();
+
+        if ($missions && count($missions) > 0) {
+
+            foreach ($missions as $mission) {
+
+                if (rtrim($mission->keyword->url, '/') === rtrim($domain, '/')) {
+
+                    $code = uniqid();
+
+                    $mission->update(['code' => $code]);
+
+                    break;
+                }
+            }
+        }
+
+        return response(['code' => $code]);
+    }
+
+    public function getConfirmMission (Request $request) {
+        $ipAddress = $request->ip_address ? $request->ip_address : '';
+
+        $code = $request->code ? $request->code : '';
+
+        $slug = $request->slug ? $request->slug : '';
+
+        if (!$ipAddress || !$code) return response(['message' => 'Not Found'], 404);
+
+        $mission = $this->model->with('keyword')->where('ip', $ipAddress)->where('code', $code)->first();
+
+        if ($mission) {
+
+            $mission->update(['status' => 1]);
+
+            if (auth()->user()) auth()->user()->increment('point');
+
+            $deviceType = Browser::deviceType();
+            $deviceName = Browser::deviceFamily();
+            $browser = Browser::browserFamily();
+            $os = Browser::platformFamily();
+
+            $tracker = Tracker::create([
+                'ip' => $ipAddress,
+                'keyword_id' => $mission->keyword->id,
+                'device_type' => $deviceType,
+                'device_name' => $deviceName,
+                'browser' => $browser,
+                'os' => $os,
+                'user_id' => auth()->user() && auth()->user()->id ? auth()->user()->id : null
+            ]);
+
+            if ($slug !== '') {
+
+                $redirector = $this->model->where('slug', $slug)->first();
+
+                if ($redirector) {
+
+                    $tracker->update(['redirector_id' => $redirector->id]);
+
+                    return \response(['source' => $redirector->url]);
+                }
+                else {
+
+                    $redirector = $this->model->inRandomOrder()->limit(1)->first();
+
+                    if ($redirector) {
+
+                        return \response(['source' => $redirector->url]);
+                    }
+
+                    return response(['source' => null]);
+
+                }
+            }
+
+            return response(['source' => null]);
+
+        }
+
+        return response(['message' => 'Mã không chính xác'], 401);
     }
 }
