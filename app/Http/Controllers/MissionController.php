@@ -86,7 +86,13 @@ class MissionController extends Controller
 
         if (!$ipAddress) return response(['message' => 'Not Found'], 404);
 
-        $mission = $this->model->with('keyword')->where('ip', $ipAddress)->where('status', 0)->first();
+        $mission = $this->model->with('keyword')
+            ->where('ip', $ipAddress)
+            ->where('status', 0)
+            ->whereHas('keyword', function($query) {
+                $query->where('status', 1);
+            })
+            ->first();
 
         return $mission;
     }
@@ -96,7 +102,13 @@ class MissionController extends Controller
 
         if (!$ipAddress) return response(['message' => 'Not Found'], 404);
 
-        $mission = $this->model->with('keyword')->where('ip', $ipAddress)->where('status', 0)->first();
+        $mission = $this->model->with('keyword')
+            ->where('ip', $ipAddress)
+            ->where('status', 0)
+            ->whereHas('keyword', function($query) {
+                $query->where('status', 1);
+            })
+            ->first();
 
         if ($mission) return $mission;
 
