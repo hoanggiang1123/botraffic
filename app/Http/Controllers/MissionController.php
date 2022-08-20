@@ -183,7 +183,7 @@ class MissionController extends Controller
         if (!$ipAddress || !$code) return response(['message' => 'Not Found'], 404);
 
         $mission = $this->model->with('keyword')
-                ->when(auth()->user(), function($query) {
+                ->when(auth()->user() && auth()->user()->id, function($query) {
                     $query->where('created_by', auth()->user()->id);
                 })
                 ->where('ip', $ipAddress)
