@@ -5,6 +5,11 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RedirectorController;
+use App\Http\Controllers\KeywordController;
+use App\Http\Controllers\MediaController;
+use App\Http\Controllers\MissionController;
+use App\Http\Controllers\TrackerController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -22,21 +27,80 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::group(['prefix' => 'auth'], function() {
+
     Route::post('/login', [AuthController::class, 'login']);
+
     Route::post('/register', [AuthController::class, 'register']);
+
     Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+
     Route::get('/me', [AuthController::class, 'me'])->middleware('auth:sanctum');
+
     Route::post('/change-password', [AuthController::class, 'changePassword'])->middleware('auth:sanctum');
+
     Route::post('/social-login', [AuthController::class, 'socialLogin']);
 });
 
-// Route::group(['prefix' => 'mission'], function() {
-//     Route::post('/', [RedirectorController::class, 'getMission']);
-// });
-Route::group(['prefix' => 'redirector'], function() {
+
+Route::group(['prefix' => 'redirector', 'middleware' => 'auth:sanctum'], function() {
+
+    Route::post('/get-mission', [MissionController::class, 'takeMission'])->withoutMiddleware('auth:sanctum');
+
+    Route::post('/confirm-mission', [MissionController::class, 'getConfirmMission'])->withoutMiddleware('auth:sanctum');
+
+    Route::get('/{id}', [RedirectorController::class, 'show']);
+
+    Route::get('/', [RedirectorController::class, 'index']);
+
     Route::post('/', [RedirectorController::class, 'store']);
-    Route::post('/get-mission', [RedirectorController::class, 'getMission']);
-    Route::post('/get-mission-code', [RedirectorController::class, 'getMissionCode']);
-    Route::post('/confirm-mission', [RedirectorController::class, 'confirmMission']);
+
+    Route::put('/{id}', [RedirectorController::class, 'update']);
+
+    Route::post('/destroy', [RedirectorController::class, 'destroy']);
 });
 
+Route::group(['prefix' => 'keyword', 'middleware' => 'auth:sanctum'], function() {
+
+    Route::get('/{id}', [KeywordController::class, 'show']);
+
+    Route::get('/', [KeywordController::class, 'index']);
+
+    Route::post('/', [KeywordController::class, 'store']);
+
+    Route::put('/{id}', [KeywordController::class, 'update']);
+
+    Route::post('/destroy', [KeywordController::class, 'destroy']);
+});
+
+Route::group(['prefix' => 'mission', 'middleware' => 'auth:sanctum'], function() {
+
+    Route::get('/take', [MissionController::class, 'takeMission']);
+
+    Route::get('/get', [MissionController::class, 'getMission']);
+
+    Route::get('/code', [MissionController::class, 'getMissionCode'])->withoutMiddleware('auth:sanctum');
+
+    Route::get('/confirm', [MissionController::class, 'getConfirmMission']);
+
+    Route::get('/complete', [MissionController::class, 'getMissionComplete']);
+
+    Route::get('/{id}', [MissionController::class, 'show']);
+
+    Route::get('/', [MissionController::class, 'index']);
+
+    Route::post('/', [MissionController::class, 'store']);
+
+    Route::put('/{id}', [MissionController::class, 'update']);
+
+    Route::post('/destroy', [MissionController::class, 'destroy']);
+});
+
+Route::group(['prefix' => 'media', 'middleware' => 'auth:sanctum'], function() {
+
+    Route::post('/', [MediaController::class, 'index']);
+});
+
+Route::group(['prefix' => 'tracker', 'middleware' => 'auth:sanctum'], function() {
+
+    Route::get('/', [TrackerController::class, 'index']);
+});

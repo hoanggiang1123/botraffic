@@ -19,6 +19,7 @@ return new class extends Migration
             $table->unsignedBigInteger('keyword_id');
             $table->integer('status')->default(0);
             $table->string('code')->nullable();
+            $table->unsignedBigInteger('created_by')->nullable();
             $table->timestamps();
         });
     }

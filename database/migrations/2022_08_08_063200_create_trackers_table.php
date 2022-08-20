@@ -15,13 +15,14 @@ return new class extends Migration
     {
         Schema::create('trackers', function (Blueprint $table) {
             $table->id();
-            $table->string('keyword');
-            $table->string('url');
+            $table->string('keyword_id');
+            $table->string('redirector_id')->nullable();
             $table->string('ip')->nullable();
             $table->string('device_type')->nullable();
             $table->string('device_name')->nullable();
             $table->string('os')->nullable();
             $table->string('browser')->nullable();
+            $table->unsignedBigInteger('user_id')->nullable();
             $table->timestamps();
         });
     }

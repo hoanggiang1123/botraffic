@@ -14,6 +14,7 @@ use App\Models\Tracker;
 use Carbon\Carbon;
 
 use Browser;
+use App\CrawMeta\CrawMeta;
 
 class RedirectorController extends Controller
 {
@@ -22,6 +23,65 @@ class RedirectorController extends Controller
     public function __construct(Redirector $redirector)
     {
         $this->model = $redirector;
+    }
+
+    public function index (Request $request) {
+        return $this->model->listItems($request->all());
+    }
+
+    public function show (Request $request, $id) {
+
+        $redirector = $this->model->withCount('trackers')->where('id', $id)->first();
+
+        if ($redirector) {
+            return $redirector;
+        }
+
+        return \response(['message' => 'Not Found'], 404);
+    }
+
+    public function store (MainRequest $request) {
+
+        $data = $request->all();
+
+        $data['created_by'] = auth()->user()->id;
+
+        if (auth()->user()->role === 'admin' && isset($data['safe_redirect']) && $data['safe_redirect'] === 1) {
+            $meta = (new CrawMeta)->getMeta($data['url']);
+            $data = array_merge($data, $meta);
+        }
+
+        $item = $this->model->create($data);
+
+        if ($item) {
+            return $item;
+        }
+
+        return response(['message' => 'Unprocess Entity'], 422);
+    }
+
+    public function update (MainRequest $request, $id) {
+
+        $item = $this->model->where('id', $id)->first();
+
+        if ($item) {
+
+            $data = $request->all();
+
+            if (auth()->user()->role === 'admin' && isset($data['safe_redirect']) && $data['safe_redirect'] === 1) {
+                $meta = (new CrawMeta)->getMeta($data['url']);
+                $data = array_merge($data, $meta);
+            }
+
+            $update = $item->update($data);
+
+            if ($update) return $update;
+
+            return response(['message' => 'Unprocess Entity'], 422);
+
+        }
+
+        return response(['message' => 'Not Found'], 404);
     }
 
     public function getMission (Request $request) {
@@ -137,39 +197,43 @@ class RedirectorController extends Controller
 
             $tracker = Tracker::create([
                 'ip' => $ipAddress,
-                'keyword' => $mission->keyword->name,
-                'url' => $mission->keyword->url,
+                'keyword_id' => $mission->keyword->id,
                 'device_type' => $deviceType,
                 'device_name' => $deviceName,
                 'browser' => $browser,
-                'os' => $os
+                'os' => $os,
+                'user_id' => auth()->user() && auth()->user()->id ? auth()->user()->id : null
             ]);
 
             $mission->update(['status' => 1]);
 
             $redirector = $this->model->where('slug', $slug)->first();
 
-            if ($redirector) {
+            if (!$redirector) {
 
+                $redirector = $this->model->inRandomOrder()->limit(1)->first();
+            }
+
+            if ($redirector) {
+                $tracker->update(['redirector_id' => $redirector->id]);
                 return \response(['source' => $redirector->url]);
             }
 
-            $redirector = $this->model->inRandomOrder()->limit(1)->first();
+            return response(['source' => null]);
 
-            return \response(['source' => $redirector->url]);
         }
 
         return response(['message' => 'Mã không chính xác'], 401);
     }
 
-    public function store (MainRequest $request) {
+    // public function store (MainRequest $request) {
 
-        $data = $request->all();
+    //     $data = $request->all();
 
-        if (auth()->user() && auth()->user()->id) $data['created_by'] = auth()->user()->id;
+    //     if (auth()->user() && auth()->user()->id) $data['created_by'] = auth()->user()->id;
 
-        $item = $this->model->create($data);
+    //     $item = $this->model->create($data);
 
-        return $item;
-    }
+    //     return $item;
+    // }
 }

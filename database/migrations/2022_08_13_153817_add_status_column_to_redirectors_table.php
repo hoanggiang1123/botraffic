@@ -13,15 +13,8 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('keywords', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('url');
-            $table->string('picture');
-            $table->string('time_on_site')->default(60);
+        Schema::table('redirectors', function (Blueprint $table) {
             $table->integer('status')->default(1);
-            $table->unsignedBigInteger('created_by')->nullable();
-            $table->timestamps();
         });
     }
 
@@ -32,6 +25,8 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('keywords');
+        Schema::table('redirectors', function (Blueprint $table) {
+            $table->dropColumn('status');
+        });
     }
 };
