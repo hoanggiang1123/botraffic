@@ -89,9 +89,6 @@ class MissionController extends Controller
         $mission = $this->model->with('keyword')
             ->where('ip', $ipAddress)
             ->where('status', 0)
-            ->whereHas('keyword', function($query) {
-                $query->where('status', 1);
-            })
             ->first();
 
         return $mission;
@@ -105,9 +102,6 @@ class MissionController extends Controller
         $mission = $this->model->with('keyword')
             ->where('ip', $ipAddress)
             ->where('status', 0)
-            ->whereHas('keyword', function($query) {
-                $query->where('status', 1);
-            })
             ->first();
 
         if ($mission) return $mission;
@@ -123,6 +117,7 @@ class MissionController extends Controller
         $keyword = Keyword::query()
             ->where('status', 1)
             ->where('approve', 1)
+            ->where('traffic', '>', 0)
             ->when(count($notAllowKeyWordIds) > 0, function($query) use($notAllowKeyWordIds) {
                 $query->whereNotIn('id', $notAllowKeyWordIds);
             })
@@ -174,6 +169,7 @@ class MissionController extends Controller
     }
 
     public function getConfirmMission (Request $request) {
+
         $ipAddress = $request->ip_address ? $request->ip_address : '';
 
         $code = $request->code ? $request->code : '';
@@ -188,6 +184,7 @@ class MissionController extends Controller
                 })
                 ->where('ip', $ipAddress)
                 ->where('code', $code)
+                ->where('status', 0)
                 ->first();
 
         if ($mission) {
@@ -196,9 +193,11 @@ class MissionController extends Controller
 
             if (auth()->user()) auth()->user()->increment('point');
 
-            if (auth()->user()->refer_id) {
+            if (auth()->user() && auth()->user()->refer_id) {
                 User::where('id', auth()->user()->refer_id)->increment('refer_point');
             }
+
+            Keyword::where('id', $mission->keyword->id)->decrement('traffic');
 
             $deviceType = Browser::deviceType();
             $deviceName = Browser::deviceFamily();

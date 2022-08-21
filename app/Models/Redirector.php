@@ -66,6 +66,13 @@ class Redirector extends Model
             return $query->withCount('missions');
 
         })
+
+        ->when(auth()->user()->role !== 'admin', function($query) {
+
+            $query->where('created_by', auth()->user()->id);
+
+        })
+
         ->when($name !== '', function ($query) use ($name) {
 
             return $query->where('name', 'like', '%' .$name. '%');
