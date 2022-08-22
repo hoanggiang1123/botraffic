@@ -222,6 +222,8 @@ class MissionController extends Controller
 
                     $tracker->update(['redirector_id' => $redirector->id]);
 
+                    User::where('id', $redirector->created_by)->increment('redirect_point');
+
                     return \response(['source' => $redirector->url]);
                 }
                 else {

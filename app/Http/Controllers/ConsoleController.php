@@ -15,8 +15,9 @@ class ConsoleController extends Controller
         $fromDate = $request->from_date ? $request->from_date : '';
         $toDate = $request->to_date ? $request->to_date : '';
 
-        $mCoint = auth()->user()->point;
-        $rCoint = auth()->user()->refer_point;
+        $mCoin = auth()->user()->point;
+        $rCoin = auth()->user()->refer_point;
+        $redirectCoin = auth()->user()->redirect_point;
         $balance = auth()->user()->balance;
 
         $totalMember = User::query()
@@ -82,8 +83,9 @@ class ConsoleController extends Controller
 
 
         return [
-            'm_coint' => $mCoint,
-            'r_coint' => $rCoint,
+            'm_coin' => $mCoin,
+            'r_coin' => $rCoin,
+            'redirect_coint' => $redirectCoin,
             'balance' => $balance,
             'total_member' => $totalMember,
             'total_redirect' => $totalRedirect,
