@@ -48,4 +48,8 @@ class User extends Authenticatable
     public function setPasswordAttribute($password) {
         $this->attributes['password'] = bcrypt($password);
     }
+
+    public function members () {
+        return $this->hasMany(User::class, 'refer_id');
+    }
 }
