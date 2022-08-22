@@ -85,7 +85,7 @@ class ConsoleController extends Controller
         return [
             'm_coin' => $mCoin,
             'r_coin' => $rCoin,
-            'redirect_coint' => $redirectCoin,
+            'redirect_coin' => $redirectCoin,
             'balance' => $balance,
             'total_member' => $totalMember,
             'total_redirect' => $totalRedirect,
