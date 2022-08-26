@@ -44,7 +44,6 @@ class ConsoleController extends Controller
                         $query->where('created_by', auth()->user()->id);
                     })
 
-
                     ->get()
 
                     ->map(function($item) {
@@ -76,24 +75,40 @@ class ConsoleController extends Controller
             'total_member' => $totalMember,
             'total_redirect' => $chartData['total_redirect'],
             'total_mission' => $chartData['total_mission'],
-            'chart' =>  $chartData['chart']
+            'chart' =>  $chartData['chart'],
+            'pie_chart' => $chartData['pie_chart']
         ];
 
     }
 
     public function createChart ($trackers,$redirectorIds, $from_date, $to_date) {
 
-        $charts = [];
-
         $chart = [
             'labels' => [],
             'datasets' => [
                 [
                     'label' => 'Redirect Click',
+                    'borderColor' => 'rgb(255, 99, 132)',
+                    'backgroundColor' => 'rgba(255, 99, 132, 0.5)',
+                    'fill' => true,
                     'data' => []
                 ],
                 [
                     'label' => 'Mission Click',
+                    'borderColor' => 'rgb(53, 162, 235)',
+                    'backgroundColor' => 'rgba(53, 162, 235, 0.5)',
+                    'fill' => true,
+                    'data' => []
+                ]
+            ]
+        ];
+
+        $pieCharts= [
+            'labels' => [],
+            'datasets' => [
+                [
+                    'label' => 'Redirect device',
+                    'backgroundColor' => [],
                     'data' => []
                 ]
             ]
@@ -107,13 +122,13 @@ class ConsoleController extends Controller
 
         $times = [];
 
+        $pies = [];
+
         $type = ($toDay - $fromDay === 0 || $toDay - $fromDay === 1) ? 'H' : 'd/m/Y';
 
-        foreach($results as $result) {
+        foreach($trackers as $result) {
 
             $time = date($type, strtotime($result->created_at));
-
-            $redirect = $mission = [];
 
             if (\in_array($result->redirector_id, $redirectorIds)) {
 
@@ -124,38 +139,52 @@ class ConsoleController extends Controller
                 $times[$time]['mission'][] = $result;
             }
 
+            $pies[$result->device_type][] = $result;
+
 
         }
 
         if (count($times) > 0) {
 
-            foreach ($times as $key => $items) {
+            foreach ($times as $key => $c) {
 
-                $redirectCount = isset($item['redirect']) ? count($item['redirect']) : 0;
+                $time = $key . ($type === 'H' ? ' h' : '');
 
-                $missionCount = isset($item['mission']) ? count($item['mission']) : 0;
+                $chart['labels'][] = $time;
 
-                $charts[] = ['Time' => $key . ($type === 'H' ? ' h' : ''), 'redirect' => count($items), 'mission' => $missionCount];
+                $redirectCount = isset($c['redirect']) ? count($c['redirect']) : 0;
+
+                $missionCount = isset($c['mision']) ? count($c['mision']) : 0;
+
+                $chart['datasets'][0]['data'][] = $redirectCount;
+
+                $chart['datasets'][1]['data'][] = $missionCount;
+
+                $totalMission += $missionCount;
+
+                $totalRedirect += $redirectCount;
             }
+        }
+        if (count($pies) > 0) {
 
+            $colors = [
+                'Desktop' => 'rgba(255, 99, 132, 0.2)',
+                'Mobile' => 'rgba(54, 162, 235, 0.2)',
+                'Tablet' => 'rgba(255, 206, 86, 0.2)',
+            ];
 
+            foreach ($pies as $key => $c) {
 
-            foreach ($charts as $c) {
+                $pieCharts['labels'][] = $key;
 
-                $chart['labels'][] = $c['Time'];
-
-                $chart['datasets'][0]['data'][] = $c['redirect'];
-
-                $chart['datasets'][1]['data'][] = $c['mission'];
-
-                $totalMission += (int) $c['mission'];
-
-                $totalRedirect += (int) $c['redirect'];
+                $pieCharts['datasets'][0]['data'][] = count($c);
+                $pieCharts['datasets'][0]['backgroundColor'][] = isset($colors[$key]) ? $colors[$key] : 'rgba(75, 192, 192, 0.2)';
             }
         }
 
         return [
             'chart' => $chart,
+            'pie_chart' => $pieCharts,
             'total_redirect' => $totalRedirect,
             'total_mission' => $totalMission
         ];
