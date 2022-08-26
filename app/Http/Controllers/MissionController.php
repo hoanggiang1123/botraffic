@@ -106,16 +106,22 @@ class MissionController extends Controller
 
         if ($mission && $mission->keyword) {
 
-            $keywordCheck = Keyword::where('id', $mission->keyword->id)->first();
+            if ($mission->keyword) {
 
-            if ($keywordCheck && $keywordCheck->status === 1) {
-                return $mission;
+                $keywordCheck = Keyword::where('id', $mission->keyword->id)->first();
+
+                if ($keywordCheck && $keywordCheck->status === 1) {
+
+                    return $mission;
+                }
+                else if ($keywordCheck->status === 0) {
+
+                    $mission->delete();
+                }
             }
-            else if ($keywordCheck->status === 0) {
+            else {
                 $mission->delete();
             }
-        } else if (!$mission->keyword) {
-            $mission->delete();
         }
 
         $notAllowKeyWordIds = $this->model->query()
