@@ -108,7 +108,12 @@ class ConsoleController extends Controller
             'datasets' => [
                 [
                     'label' => 'Redirect device',
-                    'backgroundColor' => [],
+                    'backgroundColor' => 'rgba(255, 99, 132, 0.5)',
+                    'data' => []
+                ],
+                [
+                    'label' => 'Mission device',
+                    'backgroundColor' => 'rgba(53, 162, 235, 0.5)',
                     'data' => []
                 ]
             ]
@@ -133,13 +138,14 @@ class ConsoleController extends Controller
             if (\in_array($result->redirector_id, $redirectorIds)) {
 
                 $times[$time]['redirect'][] = $result;
+
+                $pies[$result->device_type]['redirect'][] = $result;
             }
             else {
 
                 $times[$time]['mission'][] = $result;
+                $pies[$result->device_type]['mission'][] = $result;
             }
-
-            $pies[$result->device_type][] = $result;
 
 
         }
@@ -177,8 +183,13 @@ class ConsoleController extends Controller
 
                 $pieCharts['labels'][] = $key;
 
-                $pieCharts['datasets'][0]['data'][] = count($c);
-                $pieCharts['datasets'][0]['backgroundColor'][] = isset($colors[$key]) ? $colors[$key] : 'rgba(75, 192, 192, 0.2)';
+                $redirectCount = isset($c['redirect']) ? count($c['redirect']) : 0;
+
+                $missionCount = isset($c['mision']) ? count($c['mision']) : 0;
+
+                $pieCharts['datasets'][0]['data'][] = $redirectCount;
+
+                $pieCharts['datasets'][1]['data'][] = $missionCount;
             }
         }
 
