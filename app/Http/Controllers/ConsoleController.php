@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Redirector;
 use App\Models\Tracker;
+use App\Models\Keyword;
 
 class ConsoleController extends Controller
 {
@@ -173,11 +174,11 @@ class ConsoleController extends Controller
         }
         if (count($pies) > 0) {
 
-            $colors = [
-                'Desktop' => 'rgba(255, 99, 132, 0.2)',
-                'Mobile' => 'rgba(54, 162, 235, 0.2)',
-                'Tablet' => 'rgba(255, 206, 86, 0.2)',
-            ];
+            // $colors = [
+            //     'Desktop' => 'rgba(255, 99, 132, 0.2)',
+            //     'Mobile' => 'rgba(54, 162, 235, 0.2)',
+            //     'Tablet' => 'rgba(255, 206, 86, 0.2)',
+            // ];
 
             foreach ($pies as $key => $c) {
 
@@ -201,19 +202,30 @@ class ConsoleController extends Controller
         ];
     }
 
-    public function chart (Request $request) {
+    public function topTraffic (Request $request) {
 
         $fromDate = $request->from_date ? $request->from_date : '';
         $toDate = $request->to_date ? $request->to_date : '';
 
-        $redirectors = Tracker::query()
-                    ->when(auth()->user()->role !== 'admin', function($query){
+        $redirectorQuery = 'select redirectors.*, (select count(*) from trackers where redirectors.id = trackers.redirector_id and (trackers.created_at BETWEEN "'. $fromDate .'" and "'. $toDate .'")) as total from redirectors';
 
-                        $query->where('user_id', auth()->user()->id);
-                    })
-                    ->when($fromDate !== '' && $toDate !== '', function($query) use($fromDate, $toDate){
+        $keywordQuery = 'select keywords.*, (select count(*) from trackers where keywords.id = trackers.keyword_id and (trackers.created_at BETWEEN "'. $fromDate .'" and "'. $toDate .'")) as total from keywords';
 
-                        $query->whereBetween('created_at', [$fromDate, $toDate]);
-                    });
+        if (auth()->user()->role !== 'admin') {
+            $keywordQuery .= ' where created_by = ' . auth()->user()->id;
+
+            $redirectorQuery .= ' where created_by = ' . auth()->user()->id;
+        }
+
+        $keywordQuery .= ' order by total desc limit 5';
+        $redirectorQuery .= ' order by total desc limit 5';
+
+        $keywords = \DB::select($keywordQuery);
+        $redirectors = \DB::select($redirectorQuery);
+
+        return [
+            'top_links' => $redirectors,
+            'top_keywords' => $keywords
+        ];
     }
 }
