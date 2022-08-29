@@ -10,7 +10,7 @@ use App\Http\Controllers\MediaController;
 use App\Http\Controllers\MissionController;
 use App\Http\Controllers\TrackerController;
 use App\Http\Controllers\ConsoleController;
-
+use App\Http\Controllers\TransactionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -109,5 +109,13 @@ Route::group(['prefix' => 'tracker', 'middleware' => 'auth:sanctum'], function()
 Route::group(['prefix' => 'console', 'middleware' => 'auth:sanctum'], function() {
 
     Route::get('/', [ConsoleController::class, 'index']);
+    Route::get('/chart', [ConsoleController::class, 'chart']);
     Route::get('/top-traffic', [ConsoleController::class, 'topTraffic']);
+});
+
+Route::group(['prefix' => 'transaction', 'middleware' => 'auth:sanctum'], function() {
+
+    Route::get('/', [TransactionController::class, 'index']);
+    Route::post('/', [TransactionController::class, 'store']);
+    Route::put('/{id}', [TransactionController::class, 'store']);
 });

@@ -38,9 +38,78 @@ class ConsoleController extends Controller
             ->get()->count();
 
 
+            $redirectors = Redirector::query()
+
+                        ->when(auth()->user()->role !== 'admin', function($query) {
+
+                            $query->where('created_by', auth()->user()->id);
+                        })
+
+                        ->get()
+
+                        ->map(function($item) {
+
+                            return $item->id;
+                        })
+
+                        ->toArray();
+
+            $totalRedirect = 0;
+
+            if (count($redirectors) > 0) {
+
+                $totalRedirect = Tracker::query()
+
+                            ->whereIn('redirector_id', $redirectors)
+
+                            ->when($fromDate !== '' && $toDate !== '', function($query) use($fromDate, $toDate){
+
+                                $query->whereBetween('created_at', [$fromDate, $toDate]);
+                            })
+
+                            ->get()
+
+                            ->count();
+            }
+
+            $totalMission = Tracker::query()
+
+                        ->when(auth()->user()->role !== 'admin', function($query) {
+
+                            $query->where('user_id', auth()->user()->id);
+                        })
+
+                        ->whereNull('redirector_id')
+
+                        ->when($fromDate !== '' && $toDate !== '', function($query) use($fromDate, $toDate){
+
+                            $query->whereBetween('created_at', [$fromDate, $toDate]);
+                        })
+
+                        ->get()
+
+                        ->count();
+
+        return [
+            'm_coin' => $mCoin,
+            'r_coin' => $rCoin,
+            'redirect_coin' => $redirectCoin,
+            'balance' => $balance,
+            'total_member' => $totalMember,
+            'total_redirect' => $totalRedirect,
+            'total_mission' => $totalMission,
+        ];
+
+    }
+
+    public function chart (Request $request) {
+
+        $fromDate = $request->from_date ? $request->from_date : '';
+        $toDate = $request->to_date ? $request->to_date : '';
+
         $redirectorIds = Redirector::query()
 
-                    ->when(auth()->user()->role !== 'admin', function($query){
+                    ->when(auth()->user()->role !== 'admin', function($query) {
 
                         $query->where('created_by', auth()->user()->id);
                     })
@@ -54,31 +123,40 @@ class ConsoleController extends Controller
 
                     ->toArray();
 
-        $trackers = Tracker::query()
 
-                    ->when($fromDate !== '' && $toDate !== '', function($query) use($fromDate, $toDate){
+            $redirectors = Tracker::query()
 
-                        $query->whereBetween('created_at', [$fromDate, $toDate]);
-                    })
+                        ->whereIn('redirector_id', $redirectorIds)
 
-                    ->orderBy('created_at', 'asc')
+                        ->when($fromDate !== '' && $toDate !== '', function($query) use($fromDate, $toDate){
 
-                    ->get();
+                            $query->whereBetween('created_at', [$fromDate, $toDate]);
+                        })
 
+                        ->get();
 
-        $chartData = $this->createChart($trackers,$redirectorIds, $fromDate, $toDate);
+            $trackers = Tracker::query()
 
-        return [
-            'm_coin' => $mCoin,
-            'r_coin' => $rCoin,
-            'redirect_coin' => $redirectCoin,
-            'balance' => $balance,
-            'total_member' => $totalMember,
-            'total_redirect' => $chartData['total_redirect'],
-            'total_mission' => $chartData['total_mission'],
-            'chart' =>  $chartData['chart'],
-            'pie_chart' => $chartData['pie_chart']
-        ];
+                        ->when(auth()->user()->role !== 'admin', function($query) {
+
+                            $query->where('user_id', auth()->user()->id);
+                        })
+
+                        ->whereNull('redirector_id')
+
+                        ->when($fromDate !== '' && $toDate !== '', function($query) use($fromDate, $toDate){
+
+                            $query->whereBetween('created_at', [$fromDate, $toDate]);
+                        })
+
+                        ->get();
+
+            $chartData = $this->createChart($trackers, $redirectorIds, $fromDate, $toDate);
+
+            return [
+                'chart' =>  $chartData['chart'],
+                'pie_chart' => $chartData['pie_chart']
+            ];
 
     }
 
@@ -120,8 +198,6 @@ class ConsoleController extends Controller
             ]
         ];
 
-        $totalMission = $totalRedirect = 0;
-
         $fromDay = (int) date('z', strtotime($from_date));
 
         $toDay = (int) date('z', strtotime($to_date));
@@ -142,12 +218,12 @@ class ConsoleController extends Controller
 
                 $pies[$result->device_type]['redirect'][] = $result;
             }
-            else {
+            else if (!$result->redirector_id && $result->user_id && (auth()->user()->role === 'admin' || $result->user_id === auth()->user()->id)) {
 
                 $times[$time]['mission'][] = $result;
                 $pies[$result->device_type]['mission'][] = $result;
-            }
 
+            }
 
         }
 
@@ -166,19 +242,9 @@ class ConsoleController extends Controller
                 $chart['datasets'][0]['data'][] = $redirectCount;
 
                 $chart['datasets'][1]['data'][] = $missionCount;
-
-                $totalMission += $missionCount;
-
-                $totalRedirect += $redirectCount;
             }
         }
         if (count($pies) > 0) {
-
-            // $colors = [
-            //     'Desktop' => 'rgba(255, 99, 132, 0.2)',
-            //     'Mobile' => 'rgba(54, 162, 235, 0.2)',
-            //     'Tablet' => 'rgba(255, 206, 86, 0.2)',
-            // ];
 
             foreach ($pies as $key => $c) {
 
@@ -196,9 +262,7 @@ class ConsoleController extends Controller
 
         return [
             'chart' => $chart,
-            'pie_chart' => $pieCharts,
-            'total_redirect' => $totalRedirect,
-            'total_mission' => $totalMission
+            'pie_chart' => $pieCharts
         ];
     }
 
