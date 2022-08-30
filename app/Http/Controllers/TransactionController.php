@@ -9,6 +9,8 @@ use App\Http\Requests\TransactionRequest as MainRequest;
 
 use App\Models\User;
 
+use Illuminate\Support\Facades\DB;
+
 class TransactionController extends Controller
 {
     protected $model;
@@ -25,19 +27,32 @@ class TransactionController extends Controller
 
     public function store (MainRequest $request) {
 
-        $data = $request->all();
+        DB::beginTransaction();
 
-        $data['created_by'] = auth()->user()->id;
+        try {
 
-        $data['status'] = auth()->user()->role !== 'admin' ? 0 : $data['status'];
+            $data = $request->all();
 
-        $item = $this->model->create($data);
+            $data['created_by'] = auth()->user()->id;
 
-        if ($item) {
-            return $item;
+            $data['status'] = auth()->user()->role !== 'admin' ? 0 : $data['status'];
+
+            $this->model->create($data);
+
+            // User::where('id', auth()->user()->id)->update([
+            //     'balance' => auth()->user()->balance + $data['amount']
+            // ]);
+
+            DB::commit();
+
+            return response(['message' => 'Nạp tiền thành công']);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response(['message' => 'Unprocess Entity'], 422);
         }
 
-        return response(['message' => 'Unprocess Entity'], 422);
     }
 
     public function update (MainRequest $request, $id) {
