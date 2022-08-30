@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\Transaction as MainModel;
 use App\Http\Requests\TransactionRequest as MainRequest;
 
+use App\Models\User;
+
 class TransactionController extends Controller
 {
     protected $model;
@@ -89,5 +91,30 @@ class TransactionController extends Controller
         if ($delete) return $delete;
 
         return response(['message' => 'Unprocess Entity'], 422);
+    }
+
+    public function convert(Request $request) {
+
+        $data = $request->all();
+
+        if (!isset($data['type']) || !isset($data['amount']) || !$data['amount']) {
+            return response(['message' => 'Unprocess Entity'], 422);
+        }
+
+        if ($data['type'] === 'mcoin') {
+
+            $money = $data['amount'] * 1000;
+
+            if (auth()->user()->balance < $money) {
+                return response(['message' => 'Số dư của bạn không đủ'], 422);
+            }
+
+            User::where('id', auth()->user()->id)->update([
+                'point' => $data['amount'] + auth()->user()->point,
+                'balance' => auth()->user()->balance - $money
+            ]);
+
+            return response(['message' => 'Mua mcoin thành công']);
+        }
     }
 }
