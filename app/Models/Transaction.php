@@ -12,7 +12,7 @@ class Transaction extends Model
     use HasFactory;
 
     protected $fillable = [
-        'amount', 'status', 'methods', 'created_by', 'type', 'approve', 'note'
+        'amount', 'status', 'methods', 'created_by', 'type', 'approve', 'note', 'transaction_code'
     ];
 
     public function user () {

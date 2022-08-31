@@ -36,8 +36,9 @@ class TransactionController extends Controller
             $data['created_by'] = auth()->user()->id;
 
             $data['status'] = auth()->user()->role !== 'admin' ? 0 : $data['status'];
+            $data['transaction_code'] = auth()->user()->id . '-' . time();
 
-            $this->model->create($data);
+            $item = $this->model->create($data);
 
             // User::where('id', auth()->user()->id)->update([
             //     'balance' => auth()->user()->balance + $data['amount']
@@ -45,7 +46,7 @@ class TransactionController extends Controller
 
             DB::commit();
 
-            return response(['message' => 'Nạp tiền thành công']);
+            return response(['message' => 'Nạp tiền thành công', 'transaction_code' => $item->transaction_code]);
 
         } catch (\Exception $e) {
             DB::rollBack();

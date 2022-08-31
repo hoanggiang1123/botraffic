@@ -15,6 +15,7 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
+            $table->string('transaction_code')->unique();
             $table->float('amount', 12, 2)->default(0);
             $table->string('methods')->default('bank');
             $table->integer('status')->default(0);
