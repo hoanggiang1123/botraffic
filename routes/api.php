@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BankController;
 use App\Http\Controllers\RedirectorController;
 use App\Http\Controllers\KeywordController;
 use App\Http\Controllers\MediaController;
@@ -118,4 +119,11 @@ Route::group(['prefix' => 'transaction', 'middleware' => 'auth:sanctum'], functi
     Route::get('/', [TransactionController::class, 'index']);
     Route::post('/', [TransactionController::class, 'store']);
     Route::put('/{id}', [TransactionController::class, 'store']);
+});
+
+Route::group(['prefix' => 'bank', 'middleware' => 'auth:sanctum'], function() {
+    Route::get('/', [BankController::class, 'index']);
+    Route::post('/', [BankController::class, 'store']);
+    Route::put('/{id}', [BankController::class, 'store']);
+    Route::post('/destroy', [BankController::class, 'destroy']);
 });

@@ -52,4 +52,8 @@ class User extends Authenticatable
     public function members () {
         return $this->hasMany(User::class, 'refer_id');
     }
+
+    public function banks () {
+        return $this->hasMany(Bank::class, 'user_id');
+    }
 }

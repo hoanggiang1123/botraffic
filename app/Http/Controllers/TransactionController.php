@@ -132,5 +132,34 @@ class TransactionController extends Controller
 
             return response(['message' => 'Mua mcoin thành công']);
         }
+        if ($data['type'] === 'mcoin-m') {
+            $amount = (float) $data['amount'];
+            if (auth()->user()->point < $amount) {
+                return response(['message' => 'Số dư của bạn không đủ'], 422);
+            }
+
+            User::where('id', auth()->user()->id)->update([
+                'point' => auth()->user()->point - $amount,
+                'balance' => auth()->user()->balance + ($amount * 1000)
+            ]);
+
+            return response(['message' => 'Đổi tiền thành công']);
+        }
+
+        if ($data['type'] === 'rcoin-m') {
+
+            $amount = (float) $data['amount'];
+
+            if (auth()->user()->refer_point < $amount) {
+                return response(['message' => 'Số dư của bạn không đủ'], 422);
+            }
+
+            User::where('id', auth()->user()->id)->update([
+                'refer_point' => auth()->user()->refer_point - $amount,
+                'balance' => auth()->user()->balance + ($amount * 1000)
+            ]);
+
+            return response(['message' => 'Đổi tiền thành công']);
+        }
     }
 }
