@@ -107,12 +107,13 @@ class ConsoleController extends Controller
         $fromDate = $request->from_date ? $request->from_date : '';
         $toDate = $request->to_date ? $request->to_date : '';
 
-        $redirectorIds = Redirector::query()
+        $redirectorIds = [];
 
-                    ->when(auth()->user()->role !== 'admin', function($query) {
+        if (auth()->user()->role !== 'admin') {
 
-                        $query->where('created_by', auth()->user()->id);
-                    })
+            $redirectorIds = Redirector::query()
+
+                    ->where('created_by', auth()->user()->id)
 
                     ->get()
 
@@ -122,41 +123,25 @@ class ConsoleController extends Controller
                     })
 
                     ->toArray();
+        }
 
 
-            $redirectors = Tracker::query()
 
-                        ->whereIn('redirector_id', $redirectorIds)
+        $trackers = Tracker::query()
 
-                        ->when($fromDate !== '' && $toDate !== '', function($query) use($fromDate, $toDate){
+                    ->when($fromDate !== '' && $toDate !== '', function($query) use($fromDate, $toDate){
 
-                            $query->whereBetween('created_at', [$fromDate, $toDate]);
-                        })
+                        $query->whereBetween('created_at', [$fromDate, $toDate]);
+                    })
 
-                        ->get();
+                    ->get();
 
-            $trackers = Tracker::query()
+        $chartData = $this->createChart($trackers, $redirectorIds, $fromDate, $toDate);
 
-                        ->when(auth()->user()->role !== 'admin', function($query) {
-
-                            $query->where('user_id', auth()->user()->id);
-                        })
-
-                        ->whereNull('redirector_id')
-
-                        ->when($fromDate !== '' && $toDate !== '', function($query) use($fromDate, $toDate){
-
-                            $query->whereBetween('created_at', [$fromDate, $toDate]);
-                        })
-
-                        ->get();
-
-            $chartData = $this->createChart($trackers, $redirectorIds, $fromDate, $toDate);
-
-            return [
-                'chart' =>  $chartData['chart'],
-                'pie_chart' => $chartData['pie_chart']
-            ];
+        return [
+            'chart' =>  $chartData['chart'],
+            'pie_chart' => $chartData['pie_chart']
+        ];
 
     }
 
@@ -212,19 +197,31 @@ class ConsoleController extends Controller
 
             $time = date($type, strtotime($result->created_at));
 
-            if (\in_array($result->redirector_id, $redirectorIds)) {
+            if (auth()->user()->role === 'admin') {
 
-                $times[$time]['redirect'][] = $result;
+                if ($result->redirector_id) {
 
-                $pies[$result->device_type]['redirect'][] = $result;
+                    $times[$time]['redirect'][] = $result;
+
+                    $pies[$result->device_type]['redirect'][] = $result;
+                }
+                else {
+                    $times[$time]['mission'][] = $result;
+                    $pies[$result->device_type]['mission'][] = $result;
+                }
             }
-            else if (!$result->redirector_id && $result->user_id && (auth()->user()->role === 'admin' || $result->user_id === auth()->user()->id)) {
+            else {
+                if ($result->redirector_id && in_array($result->redirector_id, $redirectorIds)) {
 
-                $times[$time]['mission'][] = $result;
-                $pies[$result->device_type]['mission'][] = $result;
+                    $times[$time]['redirect'][] = $result;
 
+                    $pies[$result->device_type]['redirect'][] = $result;
+                }
+                else if (!$result->redirector_id && $result->user_id && $result->user_id === auth()->user()->id) {
+                    $times[$time]['mission'][] = $result;
+                    $pies[$result->device_type]['mission'][] = $result;
+                }
             }
-
         }
 
         if (count($times) > 0) {
