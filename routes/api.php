@@ -115,6 +115,7 @@ Route::group(['prefix' => 'console', 'middleware' => 'auth:sanctum'], function()
 });
 
 Route::group(['prefix' => 'transaction', 'middleware' => 'auth:sanctum'], function() {
+    Route::get('/stat', [TransactionController::class, 'stat']);
     Route::post('/convert', [TransactionController::class, 'convert']);
     Route::get('/', [TransactionController::class, 'index']);
     Route::post('/', [TransactionController::class, 'store']);

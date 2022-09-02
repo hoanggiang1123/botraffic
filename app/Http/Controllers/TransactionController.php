@@ -162,4 +162,18 @@ class TransactionController extends Controller
             return response(['message' => 'Đổi tiền thành công']);
         }
     }
+
+    public function stat () {
+        $totalDeposit = $this->model->where('type', 1)->get()->sum('amount');
+        $totalWithdraw = $this->model->where('type', 0)->get()->sum('amount');
+        $totalPendingDeposit = $this->model->where('type', 1)->where('status', 0)->get()->count();
+        $totalPendingWithdraw = $this->model->where('type', 0)->where('status', 0)->get()->count();
+
+        return [
+            ['name' => 'Tổng nạp tiền', 'value' =>  $totalDeposit],
+            ['name' => 'Tổng rút tiền', 'value' =>  $totalWithdraw],
+            ['name' => 'Đang chờ nạp tiền', 'value' =>  $totalPendingDeposit],
+            ['name' => 'Đang chờ rút tiền', 'value' =>  $totalPendingWithdraw],
+        ];
+    }
 }

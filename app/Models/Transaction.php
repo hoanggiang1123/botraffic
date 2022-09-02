@@ -12,11 +12,15 @@ class Transaction extends Model
     use HasFactory;
 
     protected $fillable = [
-        'amount', 'status', 'methods', 'created_by', 'type', 'approve', 'note', 'transaction_code'
+        'amount', 'status', 'methods', 'created_by', 'type', 'approve', 'note', 'transaction_code', 'payment_info_id'
     ];
 
     public function user () {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function bank () {
+        return $this->belongsTo(Bank::class, 'payment_info_id');
     }
 
 
@@ -32,6 +36,8 @@ class Transaction extends Model
 
         $withUser = isset($params['with_user']) ? $params['with_user'] : '';
 
+        $withBank = isset($params['with_bank']) ? $params['with_bank'] : '';
+
         $status = isset($params['status']) ? $params['status'] : '';
 
         $methods = isset($params['methods']) ? $params['methods'] : '';
@@ -45,11 +51,16 @@ class Transaction extends Model
 
         $createdBy = auth()->user() && auth()->user()->role &&  auth()->user()->role ===  'admin' ? auth()->user()->id : null;
 
+        $with = [];
+
+        if ($withUser) $with[] = 'user';
+        if ($withBank) $with[] = 'bank';
+
         $resp = self::query()
 
-        ->when($withUser !== '', function ($query) use ($withUser) {
+        ->when(count($with) > 0, function ($query) use ($with) {
 
-            return $query->with('user');
+            return $query->with($with);
 
         })
 
