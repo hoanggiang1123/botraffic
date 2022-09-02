@@ -96,6 +96,7 @@ class MissionController extends Controller
 
     public function takeMission(Request $request) {
         $ipAddress = $request->ip_address ? $request->ip_address : '';
+        $slug = $request->slug ? $request->slug : '';
 
         if (!$ipAddress) return response(['message' => 'Not Found'], 404);
 
@@ -124,6 +125,12 @@ class MissionController extends Controller
             }
         }
 
+        $redirectorCheck = Redirector::where('slug', $slug)->first();
+
+        $userId = null;
+
+        if ($redirectorCheck) $userId = $redirectorCheck->created_by;
+
         $notAllowKeyWordIds = $this->model->query()
             ->where('ip', $ipAddress)
             ->where('status', 1)->get()
@@ -139,7 +146,21 @@ class MissionController extends Controller
             ->when(count($notAllowKeyWordIds) > 0, function($query) use($notAllowKeyWordIds) {
                 $query->whereNotIn('id', $notAllowKeyWordIds);
             })
+            ->when($userId, function($query) use ($userId) {
+                $query->where('created_by', $userId);
+            })
             ->inRandomOrder()->limit(1)->first();
+
+        if (!$keyword) {
+            $keyword = Keyword::query()
+            ->where('status', 1)
+            ->where('approve', 1)
+            ->where('traffic', '>', 0)
+            ->when(count($notAllowKeyWordIds) > 0, function($query) use($notAllowKeyWordIds) {
+                $query->whereNotIn('id', $notAllowKeyWordIds);
+            })
+            ->inRandomOrder()->limit(1)->first();
+        }
 
         if ($keyword) {
 
