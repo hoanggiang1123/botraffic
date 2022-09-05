@@ -28,27 +28,27 @@ class KeywordController extends Controller
 
         $data = $request->all();
 
-        $data['created_by'] = auth()->user()->id;
+        if (!isset($data['created_by'])) $data['created_by'] = auth()->user()->id;
 
         if (auth()->user()->role !== 'admin' && isset($data['approve'])) {
 
             unset($data['approve']);
 
-            if (isset($data['traffic']) && (int) $data['traffic'] > 0) {
+            // if (isset($data['traffic']) && (int) $data['traffic'] > 0) {
 
-                $traffic = (int) $data['traffic'];
+            //     $traffic = (int) $data['traffic'];
 
-                if ($traffic > auth()->user()->point) {
+            //     if ($traffic > auth()->user()->point) {
 
-                    return response(['message' => 'Bạn không đủ BCOIN để chạy traffic, vui lòng nạp tiền'], 422);
-                }
-                else {
+            //         return response(['message' => 'Bạn không đủ BCOIN để chạy traffic, vui lòng nạp tiền'], 422);
+            //     }
+            //     else {
 
-                    $point = (auth()->user()->point) - $traffic;
+            //         $point = (auth()->user()->point) - $traffic;
 
-                    auth()->user()->update(['point' =>  $point]);
-                }
-            }
+            //         auth()->user()->update(['point' =>  $point]);
+            //     }
+            // }
         }
 
         $item = $this->model->create($data);
@@ -72,22 +72,22 @@ class KeywordController extends Controller
 
                 unset($data['approve']);
 
-                if (isset($data['traffic'])) {
+                // if (isset($data['traffic'])) {
 
-                    $traffic = (int) $data['traffic'];
+                //     $traffic = (int) $data['traffic'];
 
-                    $trafficAble = $item->traffic + auth()->user()->point;
+                //     $trafficAble = $item->traffic + auth()->user()->point;
 
-                    if ($traffic > $trafficAble) {
-                        return response(['message' => 'Bạn không đủ BCOIN để chạy traffic, vui lòng nạp tiền'], 422);
-                    }
-                    else {
+                //     if ($traffic > $trafficAble) {
+                //         return response(['message' => 'Bạn không đủ BCOIN để chạy traffic, vui lòng nạp tiền'], 422);
+                //     }
+                //     else {
 
-                        $point = $trafficAble - $traffic;
+                //         $point = $trafficAble - $traffic;
 
-                        User::where('id', auth()->user()->id)->update(['point' =>  $point]);
-                    }
-                }
+                //         User::where('id', auth()->user()->id)->update(['point' =>  $point]);
+                //     }
+                // }
             }
 
             $update = $item->update($data);

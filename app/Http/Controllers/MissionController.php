@@ -11,8 +11,11 @@ use App\Models\Keyword;
 use App\Models\Tracker;
 use App\Models\Redirector;
 use App\Models\User;
+use App\Models\LimitIp;
 
 use Browser;
+use Exception;
+use Illuminate\Support\Facades\DB;
 
 class MissionController extends Controller
 {
@@ -95,10 +98,25 @@ class MissionController extends Controller
     }
 
     public function takeMission(Request $request) {
+
         $ipAddress = $request->ip_address ? $request->ip_address : '';
         $slug = $request->slug ? $request->slug : '';
 
         if (!$ipAddress) return response(['message' => 'Not Found'], 404);
+
+        $checkCount = LimitIp::where('ip', $ipAddress)->first();
+
+        if ($checkCount && $checkCount->count >= 5) {
+
+            $redirect = Redirector::where('slug', $slug)->first();
+
+            if ($redirect) {
+
+                return response(['url' => $redirect->url]);
+            }
+
+            return reponse(['message' => 'Not Found'], 404);
+        }
 
         $mission = $this->model->with('keyword')
             ->where('ip', $ipAddress)
@@ -127,54 +145,42 @@ class MissionController extends Controller
 
         $redirectorCheck = Redirector::where('slug', $slug)->first();
 
-        $userId = null;
+        if ($redirectorCheck) {
 
-        if ($redirectorCheck) $userId = $redirectorCheck->created_by;
+            $notAllowKeyWordIds = $this->model->query()
+                ->where('ip', $ipAddress)
+                ->where('status', 1)->get()
+                ->map(function($mission){
+                    return $mission->keyword_id;
+                })
+                ->toArray();
 
-        $notAllowKeyWordIds = $this->model->query()
-            ->where('ip', $ipAddress)
-            ->where('status', 1)->get()
-            ->map(function($mission){
-                return $mission->keyword_id;
-            })
-            ->toArray();
-
-        $keyword = Keyword::query()
-            ->where('status', 1)
-            ->where('approve', 1)
-            ->where('traffic', '>', 0)
-            ->when(count($notAllowKeyWordIds) > 0, function($query) use($notAllowKeyWordIds) {
-                $query->whereNotIn('id', $notAllowKeyWordIds);
-            })
-            ->when($userId, function($query) use ($userId) {
-                $query->where('created_by', $userId);
-            })
-            ->inRandomOrder()->limit(1)->first();
-
-        if (!$keyword) {
             $keyword = Keyword::query()
-            ->where('status', 1)
-            ->where('approve', 1)
-            ->where('traffic', '>', 0)
-            ->when(count($notAllowKeyWordIds) > 0, function($query) use($notAllowKeyWordIds) {
-                $query->whereNotIn('id', $notAllowKeyWordIds);
-            })
-            ->inRandomOrder()->limit(1)->first();
+                ->where('status', 1)
+                ->where('approve', 1)
+                ->where('traffic', '>', 0)
+                ->when(count($notAllowKeyWordIds) > 0, function($query) use($notAllowKeyWordIds) {
+                    $query->whereNotIn('id', $notAllowKeyWordIds);
+                })
+                ->where('created_by', $redirectorCheck->created_by)
+                ->orderBy('priority', 'asc')->first();
+
+            if ($keyword) {
+
+                $mission = $this->model->create([
+                    'keyword_id' => $keyword->id,
+                    'status' => 0,
+                    'ip' => $ipAddress,
+                    'created_by' => auth()->user() && auth()->user()->id ? auth()->user()->id : null
+                ]);
+
+                return $mission->load('keyword');
+            }
+
+            return response(['url' => $redirectorCheck->url]);
         }
 
-        if ($keyword) {
-
-            $mission = $this->model->create([
-                'keyword_id' => $keyword->id,
-                'status' => 0,
-                'ip' => $ipAddress,
-                'created_by' => auth()->user() && auth()->user()->id ? auth()->user()->id : null
-            ]);
-
-            return $mission->load('keyword');
-        }
-
-        return response(['keyword' => null]);
+        return reponse(['message' => 'Not Found'], 404);
     }
 
     public function getMissionCode (Request $request) {
@@ -209,81 +215,96 @@ class MissionController extends Controller
 
     public function getConfirmMission (Request $request) {
 
-        $ipAddress = $request->ip_address ? $request->ip_address : '';
+        DB::beginTransaction();
 
-        $code = $request->code ? $request->code : '';
+        try {
+            $ipAddress = $request->ip_address ? $request->ip_address : '';
 
-        $slug = $request->slug ? $request->slug : '';
+            $code = $request->code ? $request->code : '';
 
-        if (!$ipAddress || !$code) return response(['message' => 'Not Found'], 404);
+            $slug = $request->slug ? $request->slug : '';
 
-        $mission = $this->model->with('keyword')
-                ->when(auth()->user() && auth()->user()->id, function($query) {
-                    $query->where('created_by', auth()->user()->id);
-                })
-                ->where('ip', $ipAddress)
-                ->where('code', $code)
-                ->where('status', 0)
-                ->first();
+            if (!$ipAddress || !$code) return response(['message' => 'Not Found'], 404);
 
-        if ($mission) {
+            $mission = $this->model->with('keyword')
+                    ->when(auth()->user() && auth()->user()->id, function($query) {
+                        $query->where('created_by', auth()->user()->id);
+                    })
+                    ->where('ip', $ipAddress)
+                    ->where('code', $code)
+                    ->where('status', 0)
+                    ->first();
 
-            $mission->update(['status' => 1]);
+            if ($mission) {
 
-            if (auth()->user()) auth()->user()->increment('point');
+                $mission->update(['status' => 1]);
 
-            if (auth()->user() && auth()->user()->refer_id) {
-                User::where('id', auth()->user()->refer_id)->increment('refer_point');
-            }
+                $deviceType = Browser::deviceType();
+                $deviceName = Browser::deviceFamily();
+                $browser = Browser::browserFamily();
+                $os = Browser::platformFamily();
 
-            Keyword::where('id', $mission->keyword->id)->decrement('traffic');
+                $tracker = Tracker::create([
+                    'ip' => $ipAddress,
+                    'keyword_id' => $mission->keyword->id,
+                    'device_type' => $deviceType,
+                    'device_name' => $deviceName,
+                    'browser' => $browser,
+                    'os' => $os,
+                    'user_id' => auth()->user() && auth()->user()->id ? auth()->user()->id : null
+                ]);
 
-            $deviceType = Browser::deviceType();
-            $deviceName = Browser::deviceFamily();
-            $browser = Browser::browserFamily();
-            $os = Browser::platformFamily();
+                $checkCount = LimitIp::where('ip', $ipAddress)->first();
 
-            $tracker = Tracker::create([
-                'ip' => $ipAddress,
-                'keyword_id' => $mission->keyword->id,
-                'device_type' => $deviceType,
-                'device_name' => $deviceName,
-                'browser' => $browser,
-                'os' => $os,
-                'user_id' => auth()->user() && auth()->user()->id ? auth()->user()->id : null
-            ]);
-
-            if ($slug !== '') {
-
-                $redirector = Redirector::where('slug', $slug)->first();
-
-                if ($redirector) {
-
-                    $tracker->update(['redirector_id' => $redirector->id]);
-
-                    User::where('id', $redirector->created_by)->increment('redirect_point');
-
-                    return \response(['source' => $redirector->url]);
+                if ($checkCount) {
+                    $checkCount->increment('count');
                 }
                 else {
+                    LimitIp::create(['ip' => $ipAddress, 'count' => 1]);
+                }
 
-                    $redirector = Redirector::inRandomOrder()->limit(1)->first();
+                if ($slug !== '') {
+
+                    $redirector = Redirector::where('slug', $slug)->first();
 
                     if ($redirector) {
 
+                        $tracker->update(['redirector_id' => $redirector->id]);
+
+                        DB::commit();
+
                         return \response(['source' => $redirector->url]);
                     }
+                    else {
 
-                    return response(['source' => null]);
+                        $redirector = Redirector::inRandomOrder()->limit(1)->first();
 
+                        if ($redirector) {
+
+                            DB::commit();
+
+                            return \response(['source' => $redirector->url]);
+                        }
+
+                        DB::commit();
+
+                        return response(['source' => null]);
+
+                    }
                 }
+
+                DB::commit();
+
+                return response(['source' => null]);
+
             }
 
-            return response(['source' => null]);
-
+            return response(['message' => 'Mã không chính xác'], 401);
+        } catch (\Exception $err) {
+            DB::rollBack();
+            return response(['message' => 'Có lỗi xảy ra'], 422);
         }
 
-        return response(['message' => 'Mã không chính xác'], 401);
     }
 
     public function getMissionComplete (Request $request) {

@@ -12,6 +12,7 @@ use App\Http\Controllers\MissionController;
 use App\Http\Controllers\TrackerController;
 use App\Http\Controllers\ConsoleController;
 use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -127,4 +128,8 @@ Route::group(['prefix' => 'bank', 'middleware' => 'auth:sanctum'], function() {
     Route::post('/', [BankController::class, 'store']);
     Route::put('/{id}', [BankController::class, 'store']);
     Route::post('/destroy', [BankController::class, 'destroy']);
+});
+
+Route::group(['prefix' => 'user', 'middleware' => 'auth:sanctum'], function() {
+    Route::get('/search', [UserController::class, 'search']);
 });
