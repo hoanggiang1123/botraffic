@@ -158,7 +158,6 @@ class MissionController extends Controller
             $keyword = Keyword::query()
                 ->where('status', 1)
                 ->where('approve', 1)
-                ->where('traffic', '>', 0)
                 ->when(count($notAllowKeyWordIds) > 0, function($query) use($notAllowKeyWordIds) {
                     $query->whereNotIn('id', $notAllowKeyWordIds);
                 })

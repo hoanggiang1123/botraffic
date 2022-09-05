@@ -106,6 +106,7 @@ Route::group(['prefix' => 'media', 'middleware' => 'auth:sanctum'], function() {
 Route::group(['prefix' => 'tracker', 'middleware' => 'auth:sanctum'], function() {
 
     Route::get('/', [TrackerController::class, 'index']);
+    Route::get('/chart', [TrackerController::class, 'chart']);
 });
 
 Route::group(['prefix' => 'console', 'middleware' => 'auth:sanctum'], function() {
