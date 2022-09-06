@@ -114,6 +114,7 @@ Route::group(['prefix' => 'console', 'middleware' => 'auth:sanctum'], function()
     Route::get('/', [ConsoleController::class, 'index']);
     Route::get('/chart', [ConsoleController::class, 'chart']);
     Route::get('/top-traffic', [ConsoleController::class, 'topTraffic']);
+    Route::get('/summary', [ConsoleController::class, 'summary']);
 });
 
 Route::group(['prefix' => 'transaction', 'middleware' => 'auth:sanctum'], function() {

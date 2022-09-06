@@ -11,6 +11,41 @@ use App\Models\Keyword;
 
 class ConsoleController extends Controller
 {
+    public function summary(Request $request) {
+        $fromDate = $request->from_date ? $request->from_date : '';
+        $toDate = $request->to_date ? $request->to_date : '';
+
+        return [
+            'link_click' => $this->getClick('redirector_id', $fromDate,  $toDate),
+            // 'keyword_click' => $this->getClick('keyword_id', $fromDate,  $toDate),
+        ];
+    }
+
+    public function getClick ($type, $fromDate, $toDate) {
+
+        $ids = [];
+
+        if (auth()->user()->role !== 'admin') {
+
+            $model = $type === 'keyword_id' ? new Keyword() : new Redirector();
+
+            $ids = $model->where('created_by', auth()->user()->id)->map(function($item) {
+                return $item->id;
+            })->toArray();
+
+        }
+
+        return Tracker::query()
+                ->when(count($ids) > 0, function($query) {
+                    $query->whereIn($type, $ids);
+                })
+                ->when($fromDate && $toDate, function($query) use($fromDate, $toDate) {
+                    $query->whereBetween('created_at', [$fromDate, $toDate]);
+                })
+                ->get()
+                ->count();
+    }
+
     public function index (Request $request) {
 
         $fromDate = $request->from_date ? $request->from_date : '';
