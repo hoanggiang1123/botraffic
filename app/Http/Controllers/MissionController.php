@@ -158,6 +158,7 @@ class MissionController extends Controller
             $keyword = Keyword::query()
                 ->where('status', 1)
                 ->where('approve', 1)
+                ->where('traffic', '>', 0)
                 ->when(count($notAllowKeyWordIds) > 0, function($query) use($notAllowKeyWordIds) {
                     $query->whereNotIn('id', $notAllowKeyWordIds);
                 })
@@ -237,6 +238,8 @@ class MissionController extends Controller
             if ($mission) {
 
                 $mission->update(['status' => 1]);
+
+                Keyword::where('id', $mission->keyword->id)->decrement('traffic');
 
                 $deviceType = Browser::deviceType();
                 $deviceName = Browser::deviceFamily();
