@@ -30,6 +30,8 @@ class KeywordController extends Controller
 
         if (!isset($data['created_by'])) $data['created_by'] = auth()->user()->id;
 
+        if (isset($data['traffic'])) $data['traffic_count'] = $data['traffic'];
+
         if (auth()->user()->role !== 'admin' && isset($data['approve'])) {
 
             unset($data['approve']);

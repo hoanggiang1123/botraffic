@@ -12,7 +12,7 @@ class Keyword extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'url', 'picture', 'time_on_site', 'status', 'created_by', 'approve', 'traffic', 'priority'
+        'name', 'url', 'picture', 'time_on_site', 'status', 'created_by', 'approve', 'traffic', 'priority', 'traffic_count'
     ];
 
     public function user () {
@@ -37,6 +37,7 @@ class Keyword extends Model
         $order = isset($params['order']) ? $params['order'] : 'desc';
 
         $countMission = isset($params['count_mission']) ? $params['count_mission'] : '';
+        $countClick = isset($params['count_click']) ? $params['count_click'] : '';
 
         $name = isset($params['name']) ? $params['name'] : '';
 
@@ -53,6 +54,11 @@ class Keyword extends Model
         ->when($countMission, function ($query){
 
             return $query->withCount('missions');
+
+        })
+        ->when($countClick, function ($query){
+
+            return $query->withCount('trackers');
 
         })
         ->when(auth()->user()->role !== 'admin', function($query) {
