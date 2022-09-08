@@ -4,6 +4,8 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\Keyword;
+use App\Models\LimitIp;
+use App\Models\Mission;
 use Illuminate\Support\Facades\Log;
 
 class ResetTraffic extends Command
@@ -36,6 +38,9 @@ class ResetTraffic extends Command
             ->each(function($item) {
                 $item->update(['traffic_count' => $item->traffic]);
             });
+
+        LimitIp::truncate();
+        Mission::where('status', 1)->delete();
         Log::info('reset traffic success');
     }
 }
