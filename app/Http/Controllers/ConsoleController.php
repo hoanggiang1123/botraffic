@@ -14,29 +14,32 @@ class ConsoleController extends Controller
     public function summary(Request $request) {
         $fromDate = $request->from_date ? $request->from_date : '';
         $toDate = $request->to_date ? $request->to_date : '';
+        $userId = $request->user_id ? $request->user_id : '';
 
         return [
-            'link_click' => $this->getClick('redirector_id', $fromDate,  $toDate),
+            'link_click' => $this->getClick('redirector_id', $fromDate,  $toDate, $userId),
             // 'keyword_click' => $this->getClick('keyword_id', $fromDate,  $toDate),
         ];
     }
 
-    public function getClick ($type, $fromDate, $toDate) {
+    public function getClick ($type, $fromDate, $toDate, $userId) {
 
         $ids = [];
 
-        if (auth()->user()->role !== 'admin') {
+        $createdBy = auth()->user()->role === 'admin' ? ($userId ? $userId : '') : auth()->user()->id;
+
+        if ($createdBy) {
 
             $model = $type === 'keyword_id' ? new Keyword() : new Redirector();
 
-            $ids = $model->where('created_by', auth()->user()->id)->map(function($item) {
+            $ids = $model->where('created_by', $createdBy)->get()->map(function($item) {
                 return $item->id;
             })->toArray();
 
         }
 
         return Tracker::query()
-                ->when(count($ids) > 0, function($query) {
+                ->when(count($ids) > 0, function($query) use($type, $ids) {
                     $query->whereIn($type, $ids);
                 })
                 ->when($fromDate && $toDate, function($query) use($fromDate, $toDate) {
@@ -141,14 +144,17 @@ class ConsoleController extends Controller
 
         $fromDate = $request->from_date ? $request->from_date : '';
         $toDate = $request->to_date ? $request->to_date : '';
+        $userId = $request->user_id ? $request->user_id : '';
+
+        $createdBy = auth()->user()->role === 'admin' ? ($userId ? $userId : '') : auth()->user()->id;
 
         $redirectorIds = [];
 
-        if (auth()->user()->role !== 'admin') {
+        if ($createdBy) {
 
             $redirectorIds = Redirector::query()
 
-                    ->where('created_by', auth()->user()->id)
+                    ->where('created_by', $createdBy)
 
                     ->get()
 
@@ -164,6 +170,10 @@ class ConsoleController extends Controller
 
         $trackers = Tracker::query()
 
+                    ->when(count($redirectorIds) > 0, function($query) use($redirectorIds) {
+                        $query->whereIn('redirector_id', $redirectorIds);
+                    })
+
                     ->when($fromDate !== '' && $toDate !== '', function($query) use($fromDate, $toDate){
 
                         $query->whereBetween('created_at', [$fromDate, $toDate]);
@@ -171,11 +181,85 @@ class ConsoleController extends Controller
 
                     ->get();
 
-        $chartData = $this->createChart($trackers, $redirectorIds, $fromDate, $toDate);
+        $chart = [
+            'labels' => [],
+            'datasets' => [
+                [
+                    'label' => 'Tổng Click',
+                    'borderColor' => 'rgb(255, 99, 132)',
+                    'backgroundColor' => 'rgba(255, 99, 132, 0.5)',
+                    'fill' => true,
+                    'data' => []
+                ]
+            ]
+        ];
+
+        $pieCharts= [
+            'labels' => [],
+            'datasets' => [
+                [
+                    'label' => 'Thiết bị',
+                    'backgroundColor' => [],
+                    'fill' => true,
+                    'data' => []
+                ]
+            ]
+        ];
+
+        $fromDay = (int) date('z', strtotime($fromDate));
+
+        $toDay = (int) date('z', strtotime($toDate));
+
+        $times = [];
+
+        $pies = [];
+
+        $type = ($toDay - $fromDay === 0 || $toDay - $fromDay === 1) ? 'H' : 'd/m/Y';
+
+
+        foreach($trackers as $result) {
+
+            $time = date($type, strtotime($result->created_at));
+            $device = $result->device_type;
+
+            $times[$time][] = $result;
+            $pies[$device][] = $result;
+
+        }
+
+        if (count($times) > 0) {
+
+            foreach ($times as $key => $c) {
+
+                $time = $key . ($type === 'H' ? ' h' : '');
+
+                $chart['labels'][] = $time;
+
+                $chart['datasets'][0]['data'][] = count($c);
+            }
+        }
+        if (count($pies) > 0) {
+
+            $mapColor = [
+                'Desktop' => '#ff6386',
+                'Mobile' => '#1aa1e7',
+                'Tablet' => '#ff9f50'
+            ];
+
+            foreach ($pies as $key => $c) {
+
+                $pieCharts['labels'][] = $key;
+
+                $color = isset($mapColor[$key]) ? $mapColor[$key] : 'green';
+
+                $pieCharts['datasets'][0]['data'][] = count($c);
+                $pieCharts['datasets'][0]['backgroundColor'][] = $color;
+            }
+        }
 
         return [
-            'chart' =>  $chartData['chart'],
-            'pie_chart' => $chartData['pie_chart']
+            'chart' => $chart,
+            'pie_chart' => $pieCharts
         ];
 
     }
@@ -313,8 +397,8 @@ class ConsoleController extends Controller
             $redirectorQuery .= ' where created_by = ' . auth()->user()->id;
         }
 
-        $keywordQuery .= ' order by total desc limit 5';
-        $redirectorQuery .= ' order by total desc limit 5';
+        $keywordQuery .= ' order by total desc limit 50';
+        $redirectorQuery .= ' order by total desc limit 50';
 
         $keywords = \DB::select($keywordQuery);
         $redirectors = \DB::select($redirectorQuery);
