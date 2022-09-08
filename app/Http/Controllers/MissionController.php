@@ -163,7 +163,7 @@ class MissionController extends Controller
                     $query->whereNotIn('id', $notAllowKeyWordIds);
                 })
                 ->where('created_by', $redirectorCheck->created_by)
-                ->orderBy('priority', 'asc')->first();
+                ->inRandomOrder()->first();
 
             if ($keyword) {
 
