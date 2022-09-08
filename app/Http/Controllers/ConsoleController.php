@@ -229,6 +229,8 @@ class ConsoleController extends Controller
 
         if (count($times) > 0) {
 
+            $count = 0;
+
             foreach ($times as $key => $c) {
 
                 $time = $key . ($type === 'H' ? ' h' : '');
@@ -236,7 +238,10 @@ class ConsoleController extends Controller
                 $chart['labels'][] = $time;
 
                 $chart['datasets'][0]['data'][] = count($c);
+
+                $count += count($c);
             }
+            $chart['datasets'][0]['label'] = $count . ' click';
         }
         if (count($pies) > 0) {
 
