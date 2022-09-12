@@ -47,6 +47,8 @@ Route::group(['prefix' => 'auth'], function() {
 
 Route::group(['prefix' => 'redirector', 'middleware' => 'auth:sanctum'], function() {
 
+    Route::post('/redirect', [RedirectorController::class, 'redirect'])->withoutMiddleware('auth:sanctum');
+
     Route::post('/get-mission', [MissionController::class, 'takeMission'])->withoutMiddleware('auth:sanctum');
 
     Route::post('/confirm-mission', [MissionController::class, 'getConfirmMission'])->withoutMiddleware('auth:sanctum');
@@ -134,4 +136,5 @@ Route::group(['prefix' => 'bank', 'middleware' => 'auth:sanctum'], function() {
 
 Route::group(['prefix' => 'user', 'middleware' => 'auth:sanctum'], function() {
     Route::get('/search', [UserController::class, 'search']);
+    Route::get('/api', [UserController::class, 'api']);
 });
