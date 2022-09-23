@@ -36,6 +36,8 @@ class ConsoleController extends Controller
                 return $item->id;
             })->toArray();
 
+            if (count($ids) === 0) return 0;
+
         }
 
         return Tracker::query()
@@ -148,39 +150,6 @@ class ConsoleController extends Controller
 
         $createdBy = auth()->user()->role === 'admin' ? ($userId ? $userId : '') : auth()->user()->id;
 
-        $redirectorIds = [];
-
-        if ($createdBy) {
-
-            $redirectorIds = Redirector::query()
-
-                    ->where('created_by', $createdBy)
-
-                    ->get()
-
-                    ->map(function($item) {
-
-                        return $item->id;
-                    })
-
-                    ->toArray();
-        }
-
-
-
-        $trackers = Tracker::query()
-
-                    ->when(count($redirectorIds) > 0, function($query) use($redirectorIds) {
-                        $query->whereIn('redirector_id', $redirectorIds);
-                    })
-
-                    ->when($fromDate !== '' && $toDate !== '', function($query) use($fromDate, $toDate){
-
-                        $query->whereBetween('created_at', [$fromDate, $toDate]);
-                    })
-
-                    ->get();
-
         $chart = [
             'labels' => [],
             'datasets' => [
@@ -205,6 +174,46 @@ class ConsoleController extends Controller
                 ]
             ]
         ];
+
+        $redirectorIds = [];
+
+        if ($createdBy) {
+
+            $redirectorIds = Redirector::query()
+
+                    ->where('created_by', $createdBy)
+
+                    ->get()
+
+                    ->map(function($item) {
+
+                        return $item->id;
+                    })
+
+                    ->toArray();
+
+            if (count($redirectorIds) === 0) {
+                return  [
+                    'chart' => $chart,
+                    'pie_chart' => $pieCharts
+                ];
+            }
+        }
+
+
+
+        $trackers = Tracker::query()
+
+                    ->when(count($redirectorIds) > 0, function($query) use($redirectorIds) {
+                        $query->whereIn('redirector_id', $redirectorIds);
+                    })
+
+                    ->when($fromDate !== '' && $toDate !== '', function($query) use($fromDate, $toDate){
+
+                        $query->whereBetween('created_at', [$fromDate, $toDate]);
+                    })
+
+                    ->get();
 
         $fromDay = (int) date('z', strtotime($fromDate));
 
