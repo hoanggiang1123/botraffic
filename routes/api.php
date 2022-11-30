@@ -13,6 +13,7 @@ use App\Http\Controllers\TrackerController;
 use App\Http\Controllers\ConsoleController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\InternalLinkController;
 
 /*
 |--------------------------------------------------------------------------
@@ -137,4 +138,17 @@ Route::group(['prefix' => 'bank', 'middleware' => 'auth:sanctum'], function() {
 Route::group(['prefix' => 'user', 'middleware' => 'auth:sanctum'], function() {
     Route::get('/search', [UserController::class, 'search']);
     Route::get('/api', [UserController::class, 'api']);
+});
+
+Route::group(['prefix' => 'internal-link', 'middleware' => 'auth:sanctum'], function() {
+
+    Route::get('/{id}', [InternalLinkController::class, 'show']);
+
+    Route::get('/', [InternalLinkController::class, 'index']);
+
+    Route::post('/', [InternalLinkController::class, 'store']);
+
+    Route::put('/{id}', [InternalLinkController::class, 'update']);
+
+    Route::post('/destroy', [InternalLinkController::class, 'destroy']);
 });

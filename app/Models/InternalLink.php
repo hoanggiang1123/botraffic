@@ -5,18 +5,22 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-use App\Http\Resources\MissionCollection;
+use App\Http\Resources\InternalLinkCollection;
 
-class Mission extends Model
+class InternalLink extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'ip', 'keyword_id', 'status', 'code', 'created_by', 'internal_link_id'
+        'anchor_text', 'link', 'count', 'click', 'keyword_id', 'created_by', 'status'
     ];
 
     public function keyword () {
         return $this->belongsTo(Keyword::class, 'keyword_id');
+    }
+
+    public function user () {
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function listItems ($params) {
@@ -29,29 +33,42 @@ class Mission extends Model
 
         $order = isset($params['order']) ? $params['order'] : 'desc';
 
+        $anchorText = isset($params['anchor_text']) ? $params['anchor_text'] : '';
+
+        $link = isset($params['link']) ? $params['link'] : '';
+
         $keywordId = isset($params['keyword_id']) ? $params['keyword_id'] : '';
 
         $status = isset($params['status']) ? $params['status'] : '';
 
-        $createdBy = isset($params['created_by']) ? $params['created_by'] : '';
 
-        $resp = self::query()
+        $resp = self::query()->with('user')
+
+        ->when($anchorText !== '', function ($query) use ($anchorText) {
+
+            return $query->where('anchor_text', 'like', '%' .$anchorText. '%');
+
+        })
+        ->when($link !== '', function ($query) use ($link) {
+
+            return $query->where('link','like', '%' .$link. '%');
+
+        })
 
         ->when($keywordId !== '', function ($query) use ($keywordId) {
 
             return $query->where('keyword_id', $keywordId);
+        })
 
-        })->when($status !== '', function ($query) use ($status) {
+        ->when($status !== '', function ($query) use ($status) {
 
             return $query->where('status', $status);
+        })
 
-        })->when($createdBy !== '', function ($query) use ($createdBy) {
 
-            return $query->where('created_by', $createdBy);
+        ->orderBy($orderBy, $order)->paginate($perPage);
 
-        })->orderBy($orderBy, $order)->paginate($perPage);
-
-        if ($resp) $result = new MissionCollection($resp);
+        if ($resp) $result = new InternalLinkCollection($resp);
 
         return $result;
     }

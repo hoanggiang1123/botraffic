@@ -131,15 +131,27 @@ class MissionController extends Controller
 
                 if ($keywordCheck && $keywordCheck->status === 1) {
 
-                    return $mission;
+                    $internalLink = null;
+
+                    if ($keywordCheck->internal === 1) {
+
+                        $internalLink = \App\Models\InternalLink::where('id', $mission->internal_link_id)->first();
+                    }
+
+                    return [
+                        'mission' => $mission,
+                        'anchor' => $internalLink ? $internalLink->anchor_text : null
+                    ];
                 }
                 else if ($keywordCheck->status === 0) {
 
                     $mission->delete();
+                    return reponse(['message' => 'Not Found'], 404);
                 }
             }
             else {
                 $mission->delete();
+                return reponse(['message' => 'Not Found'], 404);
             }
         }
 
@@ -167,14 +179,25 @@ class MissionController extends Controller
 
             if ($keyword) {
 
+                $internalLink = null;
+
+                if ($keyword->internal === 1) {
+
+                    $internalLink = \App\Models\InternalLink::where('keyword_id', $keyword->id)->orderBy('count', 'asc')->first();
+                }
+
                 $mission = $this->model->create([
                     'keyword_id' => $keyword->id,
                     'status' => 0,
                     'ip' => $ipAddress,
-                    'created_by' => auth()->user() && auth()->user()->id ? auth()->user()->id : null
+                    'created_by' => auth()->user() && auth()->user()->id ? auth()->user()->id : null,
+                    'internal_link_id' => $internalLink ? $internalLink->id : null
                 ]);
 
-                return $mission->load('keyword');
+                return [
+                    'mission' => $mission->load('keyword'),
+                    'anchor' =>  $internalLink ? $internalLink->anchor_text : null
+                ];
             }
 
             return response(['url' => $redirectorCheck->url]);
@@ -186,6 +209,7 @@ class MissionController extends Controller
     public function getMissionCode (Request $request) {
 
         $code = '';
+        $internal = false;
 
         $ipAddress = $request->ip_address ? $request->ip_address : '';
 
@@ -199,7 +223,18 @@ class MissionController extends Controller
 
             foreach ($missions as $mission) {
 
-                if (rtrim($mission->keyword->url, '/') === rtrim($domain, '/')) {
+                $checkLink = rtrim($mission->keyword->url, '/');
+
+                if ($mission->internal_link_id) {
+
+                    $internalLink = \App\Models\InternalLink::where('id', $mission->internal_link_id)->first();
+
+                    $checkLink = rtrim($internalLink->link, '/');
+
+                    $internal = true;
+                }
+
+                if ($checkLink === rtrim($domain, '/')) {
 
                     $code = uniqid();
 
@@ -207,10 +242,11 @@ class MissionController extends Controller
 
                     break;
                 }
+
             }
         }
 
-        return response(['code' => $code]);
+        return response(['code' => $code, 'internal' => $internal]);
     }
 
     public function getConfirmMission (Request $request) {
@@ -265,6 +301,18 @@ class MissionController extends Controller
                     LimitIp::create(['ip' => $ipAddress, 'count' => 1]);
                 }
 
+                if ($mission->internal_link_id)
+                {
+                    $internalLink = \App\Models\InternalLink::where('id', $mission->internal_link_id)->first();
+
+                    if ($internalLink)
+                    {
+                        $internalLink->increment('count');
+                        $internalLink->increment('click');
+                    }
+
+                }
+
                 if ($slug !== '') {
 
                     $redirector = Redirector::where('slug', $slug)->first();
@@ -302,8 +350,11 @@ class MissionController extends Controller
             }
 
             return response(['message' => 'Mã không chính xác'], 401);
+
         } catch (\Exception $err) {
+
             DB::rollBack();
+
             return response(['message' => 'Có lỗi xảy ra'], 422);
         }
 

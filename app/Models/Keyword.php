@@ -12,7 +12,7 @@ class Keyword extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'url', 'picture', 'time_on_site', 'status', 'created_by', 'approve', 'traffic', 'priority', 'traffic_count'
+        'name', 'url', 'picture', 'time_on_site', 'status', 'created_by', 'approve', 'traffic', 'priority', 'traffic_count', 'internal'
     ];
 
     public function user () {
@@ -25,6 +25,9 @@ class Keyword extends Model
         return $this->hasMany(Tracker::class, 'keyword_id');
     }
 
+    public function internalLinks () {
+        return $this->hasMany(InternalLink::class, 'keyword_id');
+    }
 
     public function listItems ($params) {
 
