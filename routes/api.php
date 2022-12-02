@@ -85,6 +85,7 @@ Route::group(['prefix' => 'mission', 'middleware' => 'auth:sanctum'], function()
     Route::get('/get', [MissionController::class, 'getMission']);
 
     Route::get('/code', [MissionController::class, 'getMissionCode'])->withoutMiddleware('auth:sanctum');
+    Route::get('/anchor', [MissionController::class, 'getAnchorText'])->withoutMiddleware('auth:sanctum');
 
     Route::get('/confirm', [MissionController::class, 'getConfirmMission']);
 

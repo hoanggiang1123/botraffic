@@ -273,6 +273,8 @@ class MissionController extends Controller
 
             if ($mission) {
 
+                if (time() - strtotime($mission->updated_at) < 50) return response(['message' => 'Not Found'], 404);
+
                 $mission->update(['status' => 1]);
 
                 Keyword::where('id', $mission->keyword->id)->decrement('traffic_count');
@@ -303,6 +305,9 @@ class MissionController extends Controller
 
                 if ($mission->internal_link_id)
                 {
+
+                    $tracker->update(['internal_link_id' => $mission->internal_link_id]);
+
                     $internalLink = \App\Models\InternalLink::where('id', $mission->internal_link_id)->first();
 
                     if ($internalLink)
@@ -363,5 +368,44 @@ class MissionController extends Controller
     public function getMissionComplete (Request $request) {
 
         return (new Tracker)->listItems($request->all());
+    }
+
+    public function getAnchorText (Request $request) {
+        $ipAddress = $request->ip_address ? $request->ip_address : '';
+
+        $domain = $request->domain ? $request->domain : '';
+
+        $anchor = '';
+
+        if (!$ipAddress || !$domain) return response(['message' => 'Not Found'], 404);
+
+        $missions = $this->model->with('keyword')->where('ip', $ipAddress)->where('status', 0)->get();
+
+        if ($missions && count($missions) > 0) {
+
+            foreach ($missions as $mission) {
+
+                if ($mission->keyword) {
+
+                    if (rtrim($mission->keyword->url, '/') === rtrim($domain, '/')) {
+
+                        if ($mission->internal_link_id) {
+
+                            $internalLink = \App\Models\InternalLink::where('id', $mission->internal_link_id)->first();
+
+                            if ($internalLink)
+                            {
+                                $anchor = $internalLink->anchor_text;
+                                break;
+                            }
+
+                        }
+                    }
+                }
+
+            }
+        }
+
+        return response(['anchor' => $anchor]);
     }
 }
