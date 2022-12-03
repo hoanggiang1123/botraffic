@@ -135,7 +135,7 @@ class MissionController extends Controller
 
                     if ($keywordCheck->internal === 1) {
 
-                        $internalLink = \App\Models\InternalLink::where('id', $mission->internal_link_id)->first();
+                        $internalLink = \App\Models\InternalLink::where('id', $mission->internal_link_id)->where('status', 1)->first();
 
                         if (!$mission->internal_link_id) {
                             if ($internalLink)
@@ -193,7 +193,7 @@ class MissionController extends Controller
 
                 if ($keyword->internal === 1) {
 
-                    $internalLink = \App\Models\InternalLink::where('keyword_id', $keyword->id)->orderBy('count', 'asc')->first();
+                    $internalLink = \App\Models\InternalLink::where('keyword_id', $keyword->id)->where('status', 1)->orderBy('count', 'asc')->first();
                 }
 
                 $mission = $this->model->create([
