@@ -136,6 +136,16 @@ class MissionController extends Controller
                     if ($keywordCheck->internal === 1) {
 
                         $internalLink = \App\Models\InternalLink::where('id', $mission->internal_link_id)->first();
+
+                        if (!$mission->internal_link_id) {
+                            if ($internalLink)
+                            {
+                                $mission->internal_link_id = $internalLink->id;
+                                $mission->save();
+
+                            }
+                        }
+
                     }
 
                     return [
