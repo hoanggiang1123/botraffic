@@ -283,7 +283,9 @@ class MissionController extends Controller
 
             if ($mission) {
 
-                if (!$mission->internal_link_id && time() - strtotime($mission->updated_at) < 50) return response(['message' => 'Not Found'], 404);
+                $checkTime = $mission->internal_link_id ? 10 : 50;
+
+                if (time() - strtotime($mission->updated_at) < $checkTime) return response(['message' => 'Not Found'], 404);
 
                 $mission->update(['status' => 1]);
 
