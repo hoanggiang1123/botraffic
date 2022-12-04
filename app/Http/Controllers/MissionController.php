@@ -108,12 +108,12 @@ class MissionController extends Controller
 
         if ($checkCount && $checkCount->count >= 5) {
 
-            $redirect = Redirector::where('slug', $slug)->first();
+            // $redirect = Redirector::where('slug', $slug)->first();
 
-            if ($redirect) {
+            // if ($redirect) {
 
-                return response(['url' => $redirect->url]);
-            }
+            //     return response(['url' => $redirect->url]);
+            // }
 
             return reponse(['message' => 'Not Found'], 404);
         }
