@@ -156,12 +156,12 @@ class MissionController extends Controller
                 else if ($keywordCheck->status === 0) {
 
                     $mission->delete();
-                    return reponse(['message' => 'Not Found'], 404);
+                    // return reponse(['message' => 'Not Found'], 404);
                 }
             }
             else {
                 $mission->delete();
-                return reponse(['message' => 'Not Found'], 404);
+                // return reponse(['message' => 'Not Found'], 404);
             }
         }
 
