@@ -189,6 +189,8 @@ class MissionController extends Controller
 
             if ($keyword) {
 
+                $keyword->decrement('traffic_count');
+
                 $internalLink = null;
 
                 if ($keyword->internal === 1) {
@@ -281,7 +283,7 @@ class MissionController extends Controller
                     ->where('status', 0)
                     ->first();
 
-            if ($mission) {
+            if ($mission && $mission->keyword && $mission->keyword->status === 1) {
 
                 $checkTime = $mission->internal_link_id ? 10 : 50;
 
@@ -289,7 +291,7 @@ class MissionController extends Controller
 
                 $mission->update(['status' => 1]);
 
-                Keyword::where('id', $mission->keyword->id)->decrement('traffic_count');
+                // Keyword::where('id', $mission->keyword->id)->decrement('traffic_count');
 
                 $deviceType = Browser::deviceType();
                 $deviceName = Browser::deviceFamily();
