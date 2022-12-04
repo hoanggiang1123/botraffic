@@ -36,9 +36,5 @@ class RemoveOldMission extends Command
 
         $formatted_date = $date->format('Y-m-d H:i:s');
 
-        Mission::where('updated_at', '>', $formatted_date)->get()->each(function($item) {
-            Keyword::where('id', $item->keyword_id)->increment('traffic_count');
-            $item->delete();
-        });
     }
 }
