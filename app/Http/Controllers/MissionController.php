@@ -195,7 +195,7 @@ class MissionController extends Controller
 
                 if ($keyword->internal === 1) {
 
-                    $internalLink = \App\Models\InternalLink::where('keyword_id', $keyword->id)->where('status', 1)->orderBy('count', 'asc')->first();
+                    $internalLink = \App\Models\InternalLink::where('keyword_id', $keyword->id)->where('status', 1)->inRandomOrder()->first();
                 }
 
                 $mission = $this->model->create([
