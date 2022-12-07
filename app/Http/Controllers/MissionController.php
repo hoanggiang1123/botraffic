@@ -115,7 +115,7 @@ class MissionController extends Controller
             //     return response(['url' => $redirect->url]);
             // }
 
-            return reponse(['message' => 'Not Found'], 404);
+            return response(['message' => 'Not Found'], 404);
         }
 
         $mission = $this->model->with('keyword')
