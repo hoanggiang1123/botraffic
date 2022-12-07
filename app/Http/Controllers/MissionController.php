@@ -212,7 +212,7 @@ class MissionController extends Controller
                 ];
             }
 
-            return response(['url' => $redirectorCheck->url]);
+            return response(['message' => 'Đang cập nhật nhiệm vụ, vui lòng trở lại sau it phút nữa!']);
         }
 
         return reponse(['message' => 'Not Found'], 404);
