@@ -17,6 +17,8 @@ use Browser;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
+use Illuminate\Support\Facades\Log;
+
 class MissionController extends Controller
 {
     protected $model;
@@ -102,18 +104,16 @@ class MissionController extends Controller
         $ipAddress = $request->ip_address ? $request->ip_address : '';
         $slug = $request->slug ? $request->slug : '';
 
-        if (!$ipAddress) return response(['message' => 'Not Found'], 404);
+        if (!$ipAddress) {
+            Log::info('Missing Ip address --takemission');
+            return response(['message' => 'Not Found'], 404);
+        };
 
         $checkCount = LimitIp::where('ip', $ipAddress)->first();
 
         if ($checkCount && $checkCount->count >= 5) {
 
-            // $redirect = Redirector::where('slug', $slug)->first();
-
-            // if ($redirect) {
-
-            //     return response(['url' => $redirect->url]);
-            // }
+            Log::info("ip $ipAddress vượt quá 4 lần --takemission");
 
             return response(['message' => 'Not Found'], 404);
         }
@@ -154,7 +154,7 @@ class MissionController extends Controller
                     ];
                 }
                 else if ($keywordCheck->status === 0) {
-
+                    Log::info("Từ khóa đã xóa hoặc status === 0, $ipAddress --takemission");
                     $mission->delete();
                     // return reponse(['message' => 'Not Found'], 404);
                 }
@@ -162,6 +162,7 @@ class MissionController extends Controller
             else {
                 $mission->delete();
                 // return reponse(['message' => 'Not Found'], 404);
+                Log::info("Từ khóa không tồn tại, $ipAddress --takemission");
             }
         }
 
@@ -215,6 +216,8 @@ class MissionController extends Controller
             return response(['message' => 'Đang cập nhật nhiệm vụ, vui lòng trở lại sau it phút nữa!']);
         }
 
+        Log::info("Không tồn tại slug: $slug --takemission");
+
         return reponse(['message' => 'Not Found'], 404);
     }
 
@@ -227,7 +230,12 @@ class MissionController extends Controller
 
         $domain = $request->domain ? $request->domain : '';
 
-        if (!$ipAddress || !$domain) return response(['message' => 'Not Found'], 404);
+        if (!$ipAddress || !$domain) {
+
+            Log::info('Không tồn tại ip hoặc tên miền --getCode');
+
+            return response(['message' => 'Not Found'], 404);
+        }
 
         $missions = $this->model->with('keyword')->where('ip', $ipAddress)->where('status', 0)->get();
 
@@ -272,7 +280,12 @@ class MissionController extends Controller
 
             $slug = $request->slug ? $request->slug : '';
 
-            if (!$ipAddress || !$code) return response(['message' => 'Not Found'], 404);
+            if (!$ipAddress || !$code) {
+
+                Log::info("Không tồn tại ip hoặc code --getConfirm");
+
+                return response(['message' => 'Not Found'], 404);
+            }
 
             $mission = $this->model->with('keyword')
                     ->when(auth()->user() && auth()->user()->id, function($query) {
@@ -287,7 +300,12 @@ class MissionController extends Controller
 
                 $checkTime = $mission->internal_link_id ? 10 : 50;
 
-                if (time() - strtotime($mission->updated_at) < $checkTime) return response(['message' => 'Not Found'], 404);
+                if (time() - strtotime($mission->updated_at) < $checkTime) {
+
+                    Log::info("Xác nhận mã quá nhanh (bot) --getConfirm");
+
+                    return response(['message' => 'Not Found'], 404);
+                };
 
                 $mission->update(['status' => 1]);
 
@@ -357,6 +375,8 @@ class MissionController extends Controller
 
                         DB::commit();
 
+                        Log::info("Không tồn tại slug --getConfirm");
+
                         return response(['source' => null]);
 
                     }
@@ -367,13 +387,13 @@ class MissionController extends Controller
                 return response(['source' => null]);
 
             }
-
+            Log::info("Mã không chính xác --getConfirm");
             return response(['message' => 'Mã không chính xác'], 401);
 
         } catch (\Exception $err) {
 
             DB::rollBack();
-
+            Log::info("Có lỗi xảy ra --getConfirm");
             return response(['message' => 'Có lỗi xảy ra'], 422);
         }
 
