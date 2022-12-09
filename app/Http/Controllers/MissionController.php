@@ -302,7 +302,7 @@ class MissionController extends Controller
 
                 if (time() - strtotime($mission->updated_at) < $checkTime) {
 
-                    Log::info("Xác nhận mã quá nhanh (bot) --getConfirm");
+                    Log::info("Xác nhận mã quá nhanh (bot) $ipAddress, $slug, $code --getConfirm");
 
                     return response(['message' => 'Not Found'], 404);
                 };
@@ -393,7 +393,7 @@ class MissionController extends Controller
         } catch (\Exception $err) {
 
             DB::rollBack();
-            Log::info("Có lỗi xảy ra --getConfirm");
+            Log::info("Có lỗi xảy ra  $ipAddress, $slug, $code --getConfirm");
             return response(['message' => 'Có lỗi xảy ra'], 422);
         }
 
