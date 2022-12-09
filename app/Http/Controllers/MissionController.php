@@ -387,7 +387,7 @@ class MissionController extends Controller
                 return response(['source' => null]);
 
             }
-            Log::info("Mã không chính xác --getConfirm");
+            Log::info("Mã không chính xác --getConfirm $ipAddress, $slug, $code");
             return response(['message' => 'Mã không chính xác'], 401);
 
         } catch (\Exception $err) {
