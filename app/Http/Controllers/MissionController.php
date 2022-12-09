@@ -212,7 +212,7 @@ class MissionController extends Controller
                     'anchor' =>  $internalLink ? $internalLink->anchor_text : null
                 ];
             }
-
+            Log::info("Hết nhiệm vụ, không có nhiệm vụ, hết count $ipAddress --takemission");
             return response(['message' => 'Đang cập nhật nhiệm vụ, vui lòng trở lại sau it phút nữa!']);
         }
 
