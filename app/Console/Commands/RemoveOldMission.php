@@ -30,7 +30,7 @@ class RemoveOldMission extends Command
      */
     public function handle()
     {
-        $date = new DateTime;
+        $date = new \DateTime;
 
         $date->modify('-5 minutes');
 
