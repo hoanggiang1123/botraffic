@@ -218,7 +218,7 @@ class MissionController extends Controller
 
         Log::info("Không tồn tại slug: $slug --takemission");
 
-        return reponse(['message' => 'Not Found'], 404);
+        return response(['message' => 'Not Found'], 404);
     }
 
     public function getMissionCode (Request $request) {
@@ -279,6 +279,10 @@ class MissionController extends Controller
             $code = $request->code ? $request->code : '';
 
             $slug = $request->slug ? $request->slug : '';
+
+            $redirector = Redirector::where('slug', $slug)->first();
+
+            $createdBy = $redirector ? $redirector->created_by : 'N/A';
 
             if (!$ipAddress || !$code) {
 
@@ -350,36 +354,31 @@ class MissionController extends Controller
 
                 }
 
-                if ($slug !== '') {
+                if ($redirector) {
 
-                    $redirector = Redirector::where('slug', $slug)->first();
+                    $tracker->update(['redirector_id' => $redirector->id]);
+
+                    DB::commit();
+
+                    return \response(['source' => $redirector->url]);
+                }
+                else {
+
+                    $redirector = Redirector::inRandomOrder()->limit(1)->first();
 
                     if ($redirector) {
-
-                        $tracker->update(['redirector_id' => $redirector->id]);
 
                         DB::commit();
 
                         return \response(['source' => $redirector->url]);
                     }
-                    else {
 
-                        $redirector = Redirector::inRandomOrder()->limit(1)->first();
+                    DB::commit();
 
-                        if ($redirector) {
+                    Log::info("Không tồn tại slug --getConfirm");
 
-                            DB::commit();
+                    return response(['source' => null]);
 
-                            return \response(['source' => $redirector->url]);
-                        }
-
-                        DB::commit();
-
-                        Log::info("Không tồn tại slug --getConfirm");
-
-                        return response(['source' => null]);
-
-                    }
                 }
 
                 DB::commit();
@@ -387,7 +386,7 @@ class MissionController extends Controller
                 return response(['source' => null]);
 
             }
-            Log::info("Mã không chính xác --getConfirm $ipAddress, $slug, $code");
+            Log::info("Mã không chính xác --getConfirm $ipAddress, $slug, $code, tạo bởi $createdBy");
             return response(['message' => 'Mã không chính xác'], 401);
 
         } catch (\Exception $err) {
