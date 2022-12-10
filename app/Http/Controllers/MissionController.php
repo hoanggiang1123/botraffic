@@ -482,21 +482,19 @@ class MissionController extends Controller
             }
         }
 
-        if ($anchor) {
-            $id = Str::slug($anchor);
+        $id = Str::slug($anchor);
 
-            $script = '
-                const anchor = document.querySelector(\'a[data-key="'. $id .'"]\');
-                if (anchor) {
-                    anchor.classList.add("linkhaybtn", "inside", "finish", "animate");
-                }
-                console.log("aaa");
-            ';
+        $script = '
+            const anchor = document.querySelector(\'a[data-key="'. $id .'"]\');
+            if (anchor) {
+                anchor.classList.add("linkhaybtn", "inside", "finish", "animate");
+            }
+            console.log("aaa");
+        ';
 
-            header("Content-Type: application/javascript");
-            header("Cache-Control: max-age=604800, public");
+        header("Content-Type: application/javascript");
+        header("Cache-Control: max-age=604800, public");
 
-            echo $script;
-        }
+        echo $script;
     }
 }
