@@ -447,7 +447,7 @@ class MissionController extends Controller
     public function getScript (Request $request) {
         $ipAddress = $request->ip();
 
-        Log::info('ip ' . $ipAddress);
+        // Log::info('ip ' . $ipAddress);
 
         $domain = $request->domain ? $request->domain : '';
 
@@ -492,9 +492,6 @@ class MissionController extends Controller
             console.log("aaa");
         ';
 
-        header("Content-Type: application/javascript");
-        header("Cache-Control: max-age=604800, public");
-
-        echo $script;
+        return \response($script)->header('Content-Type', 'application/javascript');
     }
 }
