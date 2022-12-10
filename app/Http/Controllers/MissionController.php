@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\DB;
 
 use Illuminate\Support\Facades\Log;
 
+use Illuminate\Support\Str;
+
 class MissionController extends Controller
 {
     protected $model;
@@ -440,5 +442,58 @@ class MissionController extends Controller
         }
 
         return response(['anchor' => $anchor]);
+    }
+
+    public function getScript (Request $request) {
+        $ipAddress = $request->ip();
+
+        $domain = $request->domain ? $request->domain : '';
+
+        $anchor = '';
+
+        if (!$ipAddress || !$domain) return response(['message' => 'Not Found'], 404);
+
+        $missions = $this->model->with('keyword')->where('ip', $ipAddress)->where('status', 0)->get();
+
+        if ($missions && count($missions) > 0) {
+
+            foreach ($missions as $mission) {
+
+                if ($mission->keyword) {
+
+                    if (rtrim($mission->keyword->url, '/') === rtrim($domain, '/')) {
+
+                        if ($mission->internal_link_id) {
+
+                            $internalLink = \App\Models\InternalLink::where('id', $mission->internal_link_id)->first();
+
+                            if ($internalLink)
+                            {
+                                $anchor = $internalLink->anchor_text;
+                                break;
+                            }
+
+                        }
+                    }
+                }
+
+            }
+        }
+
+        if ($anchor) {
+            $id = Str::slug($anchor);
+
+            $script = '
+                const anchor = document.querySelector(\'a[data-key="'. $id .'"]\');
+                if (anchor) {
+                    anchor.classList.add("linkhaybtn", "inside", "finish", "animate");
+                }
+            ';
+
+            header("Content-Type: application/javascript");
+            header("Cache-Control: max-age=604800, public");
+
+            echo $script;
+        }
     }
 }
