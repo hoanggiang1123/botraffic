@@ -489,7 +489,6 @@ class MissionController extends Controller
             if (anchor) {
                 anchor.classList.add("linkhaybtn", "inside", "finish", "animate");
             }
-            console.log("aaa");
         ';
 
         return \response($script)->header('Content-Type', 'application/javascript');
