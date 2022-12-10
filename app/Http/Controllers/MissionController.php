@@ -447,6 +447,8 @@ class MissionController extends Controller
     public function getScript (Request $request) {
         $ipAddress = $request->ip();
 
+        Log::info('ip ' . $ipAddress);
+
         $domain = $request->domain ? $request->domain : '';
 
         $anchor = '';
@@ -488,6 +490,7 @@ class MissionController extends Controller
                 if (anchor) {
                     anchor.classList.add("linkhaybtn", "inside", "finish", "animate");
                 }
+                console.log("aaa");
             ';
 
             header("Content-Type: application/javascript");
