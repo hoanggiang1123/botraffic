@@ -3,6 +3,8 @@
 use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\MissionController;
+use Illuminate\Support\Str;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -18,5 +20,3 @@ use App\Http\Controllers\MissionController;
 // Route::get('/', function () {
 //     return view('welcome');
 // });
-
-Route::get('/mission-script', [MissionController::class, 'getScript']);

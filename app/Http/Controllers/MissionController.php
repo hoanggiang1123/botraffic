@@ -215,7 +215,7 @@ class MissionController extends Controller
                 ];
             }
             Log::info("Hết nhiệm vụ, không có nhiệm vụ, hết count $ipAddress, $slug --takemission");
-            return response(['message' => 'Đang cập nhật nhiệm vụ, vui lòng trở lại sau it phút nữa!']);
+            return response(['url' => $redirectorCheck->url]);
         }
 
         Log::info("Không tồn tại slug: $slug --takemission");
