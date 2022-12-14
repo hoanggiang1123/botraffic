@@ -32,7 +32,7 @@ class RemoveOldMission extends Command
     {
         $date = new \DateTime;
 
-        $date->modify('-15 minutes');
+        $date->modify('-10 minutes');
 
         $formatted_date = $date->format('Y-m-d H:i:s');
 

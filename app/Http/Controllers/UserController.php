@@ -62,4 +62,58 @@ class UserController extends Controller
             }
         return $out;
     }
+
+    public function index (Request $request) {
+        return $this->model->listItems($request->all());
+    }
+
+    public function store (MainRequest $request) {
+
+        $data = $request->all();
+
+        if (!isset($data['created_by']) || empty($data['created_by'])) $data['created_by'] = auth()->user()->id;
+
+        $item = $this->model->create($data);
+
+        if ($item) {
+            return $item;
+        }
+
+        return response(['message' => 'Unprocess Entity'], 422);
+    }
+
+    public function update (Request $request, $id) {
+
+        if (auth()->user()->role !== 'admin') return response(['message' => 'Un anthorized'], 402);
+
+        $item = $this->model->where('id', $id)->first();
+
+        if ($item) {
+
+            $data = $request->all();
+
+            $update = $item->update($data);
+
+            if ($update) return $update;
+
+            return response(['message' => 'Unprocess Entity'], 422);
+
+        }
+
+        return response(['message' => 'Not Found'], 404);
+    }
+
+
+    public function destroy (Request $request) {
+
+        if (auth()->user()->role !== 'admin') return response(['message' => 'Un anthorized'], 402);
+
+        $ids = $request->ids;
+
+        $delete = $this->model->destroy($ids);
+
+        if ($delete) return $delete;
+
+        return response(['message' => 'Unprocess Entity'], 422);
+    }
 }

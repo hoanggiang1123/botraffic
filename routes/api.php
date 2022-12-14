@@ -141,6 +141,10 @@ Route::group(['prefix' => 'bank', 'middleware' => 'auth:sanctum'], function() {
 Route::group(['prefix' => 'user', 'middleware' => 'auth:sanctum'], function() {
     Route::get('/search', [UserController::class, 'search']);
     Route::get('/api', [UserController::class, 'api']);
+    Route::put('/{id}', [UserController::class, 'update']);
+    Route::post('/destroy', [UserController::class, 'destroy']);
+    Route::get('/', [UserController::class, 'index']);
+
 });
 
 Route::group(['prefix' => 'internal-link', 'middleware' => 'auth:sanctum'], function() {

@@ -22,7 +22,7 @@ class ResetTraffic extends Command
      *
      * @var string
      */
-    protected $description = 'Reset keywords traffic every day at 00:00';
+    protected $description = 'Reset keywords traffic every day at 06:00';
 
     /**
      * Execute the console command.
