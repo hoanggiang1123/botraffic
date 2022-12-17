@@ -7,6 +7,8 @@ use Illuminate\Console\Command;
 use App\Models\User;
 use App\Models\Keyword;
 
+use Illuminate\Support\Facades\Log;
+
 class AutoAssignMission extends Command
 {
     /**
@@ -33,11 +35,46 @@ class AutoAssignMission extends Command
         $users = User::where('assignable', 1)->inRandomOrder()->get();
         $keywords = Keyword::inRandomOrder()->get();
 
-        $chunks = array_chunk($keywords, count($users));
+        $userKeys = $this->removeDup($keywords);
 
-        // foreach ($chunks as $chunk)
-        // {
-        //     foreach ($chunk)
-        // }
+        Log::info($userKeys);
+    }
+
+    public function removeDup ($keywords, $dupKeywords = [], $userKeys = [], $count = 1) {
+
+
+        $users = User::where('assignable', 0)->inRandomOrder()->get();
+
+        foreach ($keywords as $key => $keyword)
+        {
+            $index = $key % count($users);
+
+            $id = $users[$index]->id;
+
+            if (isset($userKeys[$id][$keyword->url]))
+            {
+                if ($count >= 10) {
+
+                    $userKeys[$id][$keyword->url][] = $keyword->id;
+                }
+                else {
+
+                    $dupKeywords[] = $keyword;
+                }
+            }
+            else {
+
+                $userKeys[$id][$keyword->url][] = $keyword->id;
+            }
+
+
+        }
+
+        if (count($dupKeywords) > 0) {
+            $count++;
+            $this->removeDup($dupKeywords, [], $userKeys, $count);
+        }
+
+        return [$userKeys, $dupKeywords];
     }
 }

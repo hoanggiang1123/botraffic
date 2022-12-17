@@ -447,8 +447,6 @@ class MissionController extends Controller
     public function getScript (Request $request) {
         $ipAddress = $this->getIpAddress();
 
-        Log::info('ip ' . $ipAddress);
-
         $domain = $request->domain ? $request->domain : '';
 
         $anchor = '';
