@@ -113,7 +113,7 @@ class MissionController extends Controller
 
         $checkCount = LimitIp::where('ip', $ipAddress)->first();
 
-        if ($checkCount && $checkCount->count >= 5) {
+        if ($checkCount && $checkCount->count >= 4) {
 
             Log::info("ip $ipAddress vượt quá 4 lần --takemission");
 
@@ -315,7 +315,9 @@ class MissionController extends Controller
 
                 $mission->update(['status' => 1]);
 
-                // Keyword::where('id', $mission->keyword->id)->decrement('traffic_count');
+                $keyword = Keyword::where('id', $mission->keyword->id)->first();
+                $keyword->increment('total_click_perday');
+                $keyword->increment('total_click');
 
                 $deviceType = Browser::deviceType();
                 $deviceName = Browser::deviceFamily();
@@ -357,6 +359,9 @@ class MissionController extends Controller
                 }
 
                 if ($redirector) {
+
+                    $redirector->increment('total_click_perday');
+                    $redirector->increment('total_click');
 
                     $tracker->update(['redirector_id' => $redirector->id]);
 

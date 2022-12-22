@@ -8,6 +8,8 @@ use App\Models\LimitIp;
 use App\Models\Mission;
 use Illuminate\Support\Facades\Log;
 
+use Illuminate\Support\Facades\DB;
+
 class ResetTraffic extends Command
 {
     /**
@@ -22,7 +24,7 @@ class ResetTraffic extends Command
      *
      * @var string
      */
-    protected $description = 'Reset keywords traffic every day at 06:00';
+    protected $description = 'Reset keywords traffic every day at 00:00';
 
     /**
      * Execute the console command.
@@ -36,9 +38,10 @@ class ResetTraffic extends Command
             ->where('approve', 1)
             ->get()
             ->each(function($item) {
-                $item->update(['traffic_count' => $item->traffic]);
+                $item->update(['traffic_count' => $item->traffic, 'total_click_perday' => 0]);
             });
 
+        DB::table('redirectors')->update(['total_click_perday' => 0]);
         LimitIp::truncate();
         Mission::where('status', 1)->delete();
         Log::info('reset traffic success');

@@ -24,7 +24,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('reset:traffic')->dailyAt('06:00')->timezone('Asia/Ho_Chi_Minh');
+        $schedule->command('reset:traffic')->dailyAt('00:00')->timezone('Asia/Ho_Chi_Minh');
         $schedule->command('remove:oldmission')->everyTenMinutes();
     }
 

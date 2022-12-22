@@ -14,7 +14,7 @@ class Redirector extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'url', 'slug', 'created_by', 'title', 'image', 'keywords', 'description', 'safe_redirect', 'status'
+        'name', 'url', 'slug', 'created_by', 'title', 'image', 'keywords', 'description', 'safe_redirect', 'status', 'total_click_perday', 'total_click'
     ];
 
     // public function setNameAttribute ($name) {
