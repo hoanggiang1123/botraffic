@@ -92,6 +92,8 @@ class KeywordController extends Controller
                 // }
             }
 
+            $this->caculateTrafficCount($data, $item);
+
             $update = $item->update($data);
 
             if ($update) return $update;
@@ -101,6 +103,43 @@ class KeywordController extends Controller
         }
 
         return response(['message' => 'Not Found'], 404);
+    }
+
+    public function caculateTrafficCount(&$data, $item) {
+        if ( isset( $data['traffic'] ) )
+        {
+            $traffic = (int) $data['traffic'];
+
+            if ( $traffic <= 0 )
+            {
+                $data['traffic_count'] = 0;
+                $data['traffic'] = 0;
+
+            } else {
+
+                $gapTraffic = $item->traffic - $traffic;
+
+                if ($gapTraffic > 0) {
+
+                    $trafficCount = $item->traffic_count - $gapTraffic;
+
+                    if ($trafficCount <=0) {
+
+                        $data['traffic_count'] = 0;
+                    }
+                    else {
+                        $data['traffic_count'] = $trafficCount;
+                    }
+
+                } else {
+
+                    $trafficCount = $item->traffic_count + abs( $gapTraffic );
+
+                    $data['traffic_count'] = $trafficCount;
+                }
+            }
+
+        }
     }
 
 
