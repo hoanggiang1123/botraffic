@@ -103,8 +103,6 @@ class MissionController extends Controller
 
     public function takeMission(Request $request) {
 
-        Log::info('referrer ' .$request->headers->get('referer'));
-
         $ipAddress = $request->ip_address ? $request->ip_address : '';
         $slug = $request->slug ? $request->slug : '';
 
