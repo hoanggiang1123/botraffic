@@ -370,7 +370,7 @@ class MissionController extends Controller
                     $redirector->increment('total_click_perday');
                     $redirector->increment('total_click');
 
-                    $tracker->update(['redirector_id' => $redirector->id]);
+                    $tracker->update(['redirector_id' => $redirector->id, 'redirector_user_id' => $redirector->created_by]);
 
                     DB::commit();
 

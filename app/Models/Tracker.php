@@ -12,7 +12,7 @@ class Tracker extends Model
     use HasFactory;
 
     protected $fillable = [
-        'ip', 'keyword_id', 'device_type', 'device_name', 'os', 'browser', 'user_id', 'redirector_id', 'internal_link_id'
+        'ip', 'keyword_id', 'device_type', 'device_name', 'os', 'browser', 'user_id', 'redirector_id', 'internal_link_id', 'redirector_user_id', 'job'
     ];
 
     public function keyword () {

@@ -1,0 +1,34 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     *
+     * @return void
+     */
+    public function up()
+    {
+        Schema::table('trackers', function (Blueprint $table) {
+            $table->unsignedBigInteger('redirector_user_id')->nullable();
+            $table->integer('job')->default(0);
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
+        Schema::table('trackers', function (Blueprint $table) {
+            $table->dropColumn('redirector_user_id');
+            $table->dropColumn('job');
+        });
+    }
+};
