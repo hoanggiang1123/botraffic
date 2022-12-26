@@ -58,6 +58,10 @@ class Redirector extends Model
 
         $safeRedirect = isset($params['safe_redirect']) ? $params['safe_redirect'] : '';
 
+        $fromDate = isset($params['from_date']) ? $params['from_date'] : '';
+
+        $toDate = isset($params['to_date']) ? $params['to_date'] : '';
+
 
         $resp = self::query()->with('user')
 
@@ -100,9 +104,14 @@ class Redirector extends Model
             return $query->where('safe_redirect', $safeRedirect);
 
         })
-        ->when($createdBy !== '', function ($query) use ($createdBy) {
+        ->when($createdBy !== '' && auth()->user()->role === 'admin', function ($query) use ($createdBy) {
 
             return $query->where('created_by', $createdBy);
+
+        })
+        ->when($fromDate !== '' && $toDate !== '', function ($query) use ($fromDate, $toDate) {
+
+            return $query->whereBetween('created_at', [$fromDate, $toDate]);
 
         })
         ->orderBy($orderBy, $order)->paginate($perPage);

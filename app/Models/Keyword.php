@@ -52,6 +52,8 @@ class Keyword extends Model
 
         $approve = isset($params['approve']) ? $params['approve'] : '';
 
+        $internal = isset($params['internal']) ? $params['internal'] : '';
+
         $fromDate = isset($params['from_date']) ? $params['from_date'] : '';
 
         $toDate = isset($params['to_date']) ? $params['to_date'] : '';
@@ -100,6 +102,11 @@ class Keyword extends Model
         ->when($approve !== '', function ($query) use ($approve) {
 
             return $query->where('approve', $approve);
+
+        })
+        ->when($internal !== '', function ($query) use ($internal) {
+
+            return $query->where('internal', $internal);
 
         })
         ->when($fromDate !== '' && $toDate !== '', function ($query) use ($fromDate, $toDate) {

@@ -70,7 +70,10 @@ class RedirectorController extends Controller
 
             $data = $request->all();
 
-            $data['url'] = rtrim($data['url'], '/');
+            if (isset($data['url']))
+            {
+                $data['url'] = rtrim($data['url'], '/');
+            }
 
             if (auth()->user()->role === 'admin' && isset($data['safe_redirect']) && $data['safe_redirect'] === 1) {
                 $meta = (new CrawMeta)->getMeta($data['url']);

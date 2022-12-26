@@ -117,6 +117,13 @@ class MissionController extends Controller
 
             Log::info("ip $ipAddress vượt quá 4 lần --takemission");
 
+            $redirectorCheck = Redirector::where('slug', $slug)->first();
+
+            if ($redirectorCheck) {
+
+                return response(['url' => $redirectorCheck->url]);
+            }
+
             return response(['message' => 'Not Found'], 404);
         }
 
