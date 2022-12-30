@@ -9,6 +9,11 @@ use App\Models\Redirector;
 use App\Models\Tracker;
 use App\Models\Keyword;
 
+use App\Exports\ConsoleExport;
+use Maatwebsite\Excel\Facades\Excel;
+
+use Illuminate\Support\Facades\Storage;
+
 class ConsoleController extends Controller
 {
     public function summary(Request $request) {
@@ -19,6 +24,20 @@ class ConsoleController extends Controller
         return [
             'link_click' => $this->getClick('redirector_id', $fromDate,  $toDate, $userId),
             // 'keyword_click' => $this->getClick('keyword_id', $fromDate,  $toDate),
+        ];
+    }
+
+    public function summaryNew (Request $request)
+    {
+        $redirector = Redirector::query()
+                    ->when(auth()->user()->role !== 'admin', function($query) {
+                        $query->where('created_by', auth()->user()->id);
+                    })
+                    ->get();
+
+        return [
+            'total_click' => $redirector->sum('total_click'),
+            'total_click_perday' => $redirector->sum('total_click_perday')
         ];
     }
 
@@ -278,6 +297,77 @@ class ConsoleController extends Controller
 
     }
 
+    public function chartNew(Request $request)
+    {
+        $fromDate = $request->from_date ? $request->from_date : '';
+        $toDate = $request->to_date ? $request->to_date : '';
+        $userId = $request->user_id ? $request->user_id : '';
+
+        $createdBy = auth()->user()->role === 'admin' ? ($userId ? $userId : '') : auth()->user()->id;
+
+        $chart = [
+            'labels' => [],
+            'datasets' => [
+                [
+                    'label' => 'Tổng Click',
+                    'borderColor' => 'rgb(255, 99, 132)',
+                    'backgroundColor' => 'rgba(255, 99, 132, 0.5)',
+                    'fill' => true,
+                    'data' => []
+                ]
+            ]
+        ];
+
+        $trackers = Tracker::query()
+                        ->when($createdBy, function($query) use($createdBy) {
+                            $query->where('redirector_user_id', $createdBy);
+                        })
+                        ->when($fromDate !== '' && $toDate !== '', function($query) use($fromDate, $toDate){
+
+                            $query->whereBetween('created_at', [$fromDate, $toDate]);
+                        })
+
+                        ->get();
+
+        $fromDay = (int) date('z', strtotime($fromDate));
+
+        $toDay = (int) date('z', strtotime($toDate));
+
+        $times = [];
+
+        $type = ($toDay - $fromDay === 0 || $toDay - $fromDay === 1) ? 'H' : 'd/m/Y';
+
+        foreach($trackers as $result)
+        {
+            $time = date($type, strtotime($result->created_at));
+
+            $times[$time][] = $result;
+
+        }
+
+        if (count($times) > 0) {
+
+            $count = 0;
+
+            foreach ($times as $key => $c) {
+
+                $time = $key . ($type === 'H' ? ' h' : '');
+
+                $chart['labels'][] = $time;
+
+                $chart['datasets'][0]['data'][] = count($c);
+
+                $count += count($c);
+            }
+            $chart['datasets'][0]['label'] = $count . ' click';
+        }
+
+        return [
+            'chart' => $chart,
+        ];
+
+    }
+
     public function createChart ($trackers,$redirectorIds, $from_date, $to_date) {
 
         $chart = [
@@ -421,5 +511,84 @@ class ConsoleController extends Controller
             'top_links' => $redirectors,
             'top_keywords' => $keywords
         ];
+    }
+
+    public function report(Request $request)
+    {
+        $perPage = isset($params['per_page']) ? (int) $params['per_page'] : 10000;
+
+        $orderBy = isset($params['order_by']) ? $params['order_by'] : 'created_at';
+
+        $order = isset($params['order']) ? $params['order'] : 'desc';
+
+        $fromDate = $request->from_date ? $request->from_date : '';
+        $toDate = $request->to_date ? $request->to_date : '';
+        $userId = $request->user_id ? $request->user_id : '';
+
+        $perPage = $request->per_page ? (int) $request->per_page : 1000;
+
+        $orderBy = 'created_at';
+
+        $order = 'desc';
+
+        $items = Tracker::query()
+                    ->select('id', 'redirector_user_id', 'keyword_id', 'internal_link_id')
+                    ->with(['user', 'keyword', 'internal'])
+                    ->when($userId !== '' && auth()->user()->role === 'admin', function ($query) use ($userId) {
+
+                        return $query->where('redirector_user_id', $userId);
+
+                    })
+                    ->when($fromDate !== '' && $toDate !== '', function ($query) use ($fromDate, $toDate) {
+
+                        return $query->whereBetween('created_at', [$fromDate, $toDate]);
+
+                    })
+                    ->orderBy($orderBy, $order)->paginate($perPage);
+
+        return $items;
+    }
+
+    public function export(Request $request) {
+
+        $fromDate = $request->from_date ? $request->from_date : '';
+        $toDate = $request->to_date ? $request->to_date : '';
+        $userId = $request->user_id ? $request->user_id : '';
+
+        $perPage = $request->per_page ? (int) $request->per_page : 1000;
+
+        $orderBy = 'created_at';
+
+        $order = 'desc';
+
+        $items = Tracker::query()
+                    ->select('id', 'redirector_user_id', 'keyword_id', 'internal_link_id')
+                    ->with(['user', 'keyword', 'internal'])
+                    ->when($userId !== '' && auth()->user()->role === 'admin', function ($query) use ($userId) {
+
+                        return $query->where('redirector_user_id', $userId);
+
+                    })
+                    ->when($fromDate !== '' && $toDate !== '', function ($query) use ($fromDate, $toDate) {
+
+                        return $query->whereBetween('created_at', [$fromDate, $toDate]);
+
+                    })
+                    ->orderBy('created_at', 'desc')->get();
+
+        try {
+
+            $exel = new ConsoleExport($items);
+
+            Storage::delete('public/excel/tracker.xlsx');
+
+            Excel::store($exel, 'public/excel/tracker.xlsx');
+
+            return '/storage/excel/tracker.xlsx?time=' . time();
+
+        } catch (\Exception $e) {
+            return response(['message' => $e->getMessage()]);
+        }
+
     }
 }

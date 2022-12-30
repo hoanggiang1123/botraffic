@@ -23,6 +23,16 @@ class Tracker extends Model
         return $this->belongsTo(Redirector::class, 'redirector_id');
     }
 
+    public function user ()
+    {
+        return $this->belongsTo(User::class, 'redirector_user_id');
+    }
+
+    public function internal ()
+    {
+        return $this->belongsTo(InternalLink::class, 'internal_link_id');
+    }
+
     public function listItems ($params) {
 
         $result = [];
@@ -53,6 +63,8 @@ class Tracker extends Model
 
         isset($params['with_redirector']) ? $withs[] = 'redirector' : '';
 
+        isset($params['with_user']) ? $withs[] = 'user' : '';
+
         $resp = self::query()
 
         ->when(count($withs) > 0, function($query) use ($withs) {
@@ -72,7 +84,7 @@ class Tracker extends Model
         })
         ->when($userId !== '', function ($query) use ($userId) {
 
-            return $query->where('user_id', $userId);
+            return $query->where('redirector_user_id', $userId);
 
         })
         ->when($deviceType !== '', function ($query) use ($deviceType) {
