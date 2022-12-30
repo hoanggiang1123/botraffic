@@ -230,6 +230,188 @@ class MissionController extends Controller
         return response(['message' => 'Not Found'], 404);
     }
 
+    public function takeMissionNew(Request $request)
+    {
+        $ipAddress = $request->ip_address ? $request->ip_address : '';
+        $slug = $request->slug ? $request->slug : '';
+
+        if (!$ipAddress) {
+            Log::info('Missing Ip address --takemission');
+            return response(['message' => 'Not Found'], 404);
+        };
+
+        $checkCount = LimitIp::where('ip', $ipAddress)->first();
+
+        if ($checkCount && $checkCount->count >= 4) {
+
+            Log::info("ip $ipAddress vượt quá 4 lần --takemission");
+
+            $redirectorCheck = Redirector::where('slug', $slug)->first();
+
+            if ($redirectorCheck) {
+
+                return response(['url' => $redirectorCheck->url]);
+            }
+
+            return response(['message' => 'Not Found'], 404);
+        }
+
+        $mission = $this->model->with('keyword')
+            ->where('ip', $ipAddress)
+            ->where('status', 0)
+            ->first();
+
+        if ($mission) {
+
+            if ($mission->keyword) {
+
+                $keywordCheck = Keyword::where('id', $mission->keyword->id)->first();
+
+                if ($keywordCheck && $keywordCheck->status === 1) {
+
+                    $internalLink = null;
+
+                    if ($keywordCheck->internal === 1) {
+
+                        $internalLink = \App\Models\InternalLink::where('id', $mission->internal_link_id)->where('status', 1)->first();
+
+                        if (!$mission->internal_link_id) {
+                            if ($internalLink)
+                            {
+                                $mission->internal_link_id = $internalLink->id;
+                                $mission->save();
+
+                            }
+                        }
+
+                    }
+
+                    return [
+                        'mission' => $mission,
+                        'anchor' => $internalLink ? $internalLink->anchor_text : null
+                    ];
+                }
+                else if ($keywordCheck->status === 0) {
+                    Log::info("Từ khóa đã xóa hoặc status === 0, $ipAddress --takemission");
+                    $mission->delete();
+                    // return reponse(['message' => 'Not Found'], 404);
+                }
+            }
+            else {
+                $mission->delete();
+                // return reponse(['message' => 'Not Found'], 404);
+                Log::info("Từ khóa không tồn tại, $ipAddress --takemission");
+            }
+        }
+
+        $notAllowIds = [];
+        $notAllowUrl = [];
+
+        $completeKeyword = $this->model->query()
+            ->with('keyword')
+            ->where('ip', $ipAddress)
+            ->where('status', 1)->get();
+
+        foreach ($completeKeyword as $keyword)
+        {
+            $notAllowIds[] = $keyword->keyword_id;
+
+            if ($keyword->keyword && $keyword->keyword->url)
+            {
+                $url = $this->getHostNameFromUrl($keyword->keyword->url);
+
+                if ($url)  $notAllowUrl[] = $url;
+
+            }
+        }
+
+        $keywords= Keyword::query()
+            ->where('status', 1)
+            ->where('approve', 1)
+            ->where('traffic_count', '>', 0)
+            ->when(count($notAllowIds) > 0, function($query) use($notAllowIds) {
+                $query->whereNotIn('id', $notAllowIds);
+            })
+            ->inRandomOrder()->limit(10)->get();
+
+        $selectedKeyword = null;
+
+        foreach ($keywords as $keyword)
+        {
+            $url = $this->getHostNameFromUrl($keyword->url);
+
+            if ( !in_array($url, $notAllowUrl) )
+            {
+                $selectedKeyword = $keyword;
+                break;
+            }
+        }
+
+        if ($selectedKeyword)
+        {
+
+            $selectedKeyword->decrement('traffic_count');
+
+            $internalLink = null;
+
+            if ($selectedKeyword->internal === 1) {
+
+                $internalLink = \App\Models\InternalLink::where('keyword_id', $selectedKeyword->id)->where('status', 1)->inRandomOrder()->first();
+            }
+
+            $mission = $this->model->create([
+                'keyword_id' => $selectedKeyword->id,
+                'status' => 0,
+                'ip' => $ipAddress,
+                'created_by' => auth()->user() && auth()->user()->id ? auth()->user()->id : null,
+                'internal_link_id' => $internalLink ? $internalLink->id : null
+            ]);
+
+            return [
+                'mission' => $mission->load('keyword'),
+                'anchor' =>  $internalLink ? $internalLink->anchor_text : null
+            ];
+        }
+
+        $redirectorCheck = Redirector::where('slug', $slug)->first();
+
+        if ($redirectorCheck) {
+            Log::info("Hết nhiệm vụ, không có nhiệm vụ, hết count $ipAddress, $slug --takemission");
+            return response(['url' => $redirectorCheck->alternative_link]);
+        }
+
+        Log::info("Không tồn tại slug: $slug --takemission");
+
+        return response(['message' => 'Not Found'], 404);
+
+    }
+
+    public function getHostNameFromUrl ($input) {
+
+        $input = trim($input, '/');
+
+        if (!preg_match('#^http(s)?://#', $input)) {
+            $input = 'http://' . $input;
+        }
+
+        $urlParts = parse_url($input);
+
+        if (isset($urlParts['host'])) {
+            $domain_name = preg_replace('/^www\./', '', $urlParts['host']);
+
+            $check = explode('.', $domain_name);
+
+            if (count($check) > 2) {
+                return $check[1] . '.' . $check[2];
+            }
+
+            return $domain_name;
+        }
+
+        return '';
+
+    }
+
     public function getMissionCode (Request $request) {
 
         $code = '';

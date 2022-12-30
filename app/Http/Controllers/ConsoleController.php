@@ -14,6 +14,8 @@ use Maatwebsite\Excel\Facades\Excel;
 
 use Illuminate\Support\Facades\Storage;
 
+use Illuminate\Support\Facades\DB;
+
 class ConsoleController extends Controller
 {
     public function summary(Request $request) {
@@ -531,25 +533,34 @@ class ConsoleController extends Controller
 
         $order = 'desc';
 
-        $items = Tracker::query()
-                    ->select('id', 'redirector_user_id', 'keyword_id', 'internal_link_id')
-                    ->with(['user', 'keyword', 'internal'])
-                    ->when($userId !== '' && auth()->user()->role === 'admin', function ($query) use ($userId) {
+        $items = DB::table('trackers')->join('users', function($join) {
 
-                        return $query->where('redirector_user_id', $userId);
+                    $join->on('trackers.redirector_user_id', '=', 'users.id');
 
-                    })
-                    ->when($fromDate !== '' && $toDate !== '', function ($query) use ($fromDate, $toDate) {
+                })->join('keywords', function($join) {
 
-                        return $query->whereBetween('created_at', [$fromDate, $toDate]);
+                    $join->on('trackers.keyword_id', '=', 'keywords.id');
 
-                    })
-                    ->orderBy($orderBy, $order)->paginate($perPage);
+                })->join('internal_links', function($join) {
+
+                    $join->on('trackers.internal_link_id', '=', 'internal_links.id');
+                })
+                ->select('trackers.id', 'trackers.redirector_user_id', 'trackers.keyword_id','trackers.internal_link_id', 'trackers.created_at', 'keywords.id as keyword_id', 'keywords.name as keyword_name', 'keywords.url', 'keywords.traffic', 'keywords.total_click', 'keywords.total_click_perday', 'internal_links.anchor_text', 'internal_links.link', 'users.name')
+                ->when($fromDate !== '' && $toDate !== '', function ($query) use ($fromDate, $toDate) {
+                    return $query->whereBetween('trackers.created_at', [$fromDate, $toDate]);
+                })
+                ->orderBy($orderBy, $order)->paginate($perPage);
 
         return $items;
     }
 
     public function export(Request $request) {
+
+        $perPage = isset($params['per_page']) ? (int) $params['per_page'] : 10000;
+
+        $orderBy = isset($params['order_by']) ? $params['order_by'] : 'created_at';
+
+        $order = isset($params['order']) ? $params['order'] : 'desc';
 
         $fromDate = $request->from_date ? $request->from_date : '';
         $toDate = $request->to_date ? $request->to_date : '';
@@ -561,20 +572,23 @@ class ConsoleController extends Controller
 
         $order = 'desc';
 
-        $items = Tracker::query()
-                    ->select('id', 'redirector_user_id', 'keyword_id', 'internal_link_id')
-                    ->with(['user', 'keyword', 'internal'])
-                    ->when($userId !== '' && auth()->user()->role === 'admin', function ($query) use ($userId) {
+        $items = DB::table('trackers')->join('users', function($join) {
 
-                        return $query->where('redirector_user_id', $userId);
+                    $join->on('trackers.redirector_user_id', '=', 'users.id');
 
-                    })
-                    ->when($fromDate !== '' && $toDate !== '', function ($query) use ($fromDate, $toDate) {
+                })->join('keywords', function($join) {
 
-                        return $query->whereBetween('created_at', [$fromDate, $toDate]);
+                    $join->on('trackers.keyword_id', '=', 'keywords.id');
 
-                    })
-                    ->orderBy('created_at', 'desc')->get();
+                })->join('internal_links', function($join) {
+
+                    $join->on('trackers.internal_link_id', '=', 'internal_links.id');
+                })
+                ->select('trackers.id', 'trackers.redirector_user_id', 'trackers.keyword_id','trackers.internal_link_id', 'trackers.created_at', 'keywords.id as keyword_id', 'keywords.name as keyword_name', 'keywords.url', 'keywords.traffic', 'keywords.total_click', 'keywords.total_click_perday', 'internal_links.anchor_text', 'internal_links.link', 'users.name')
+                ->when($fromDate !== '' && $toDate !== '', function ($query) use ($fromDate, $toDate) {
+                    return $query->whereBetween('trackers.created_at', [$fromDate, $toDate]);
+                })
+                ->orderBy($orderBy, $order)->get();
 
         try {
 
