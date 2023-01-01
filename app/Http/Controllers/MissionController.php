@@ -377,7 +377,7 @@ class MissionController extends Controller
 
         if ($redirectorCheck) {
             Log::info("Hết nhiệm vụ, không có nhiệm vụ, hết count $ipAddress, $slug --takemission");
-            return response(['url' => $redirectorCheck->alternative_link]);
+            return response(['url' => $redirectorCheck->alternative_link ? $redirectorCheck->alternative_link : $redirectorCheck->url]);
         }
 
         Log::info("Không tồn tại slug: $slug --takemission");
