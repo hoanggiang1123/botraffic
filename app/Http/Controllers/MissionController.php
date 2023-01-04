@@ -12,6 +12,8 @@ use App\Models\Tracker;
 use App\Models\Redirector;
 use App\Models\User;
 use App\Models\LimitIp;
+use App\Models\BadIp;
+use App\Models\BlockIp;
 
 use Browser;
 use Exception;
@@ -240,13 +242,40 @@ class MissionController extends Controller
             return response(['message' => 'Not Found'], 404);
         };
 
+        $block = BlockIp::where('ip', $ipAddress)->first();
+
+        if ($block) {
+
+            Log::info("ip $ipAddress in black list --takemission");
+
+            $redirectorCheck = Redirector::where('slug', $slug)->first();
+
+            if ($redirectorCheck) {
+
+                return response(['url' => $redirectorCheck->url]);
+            }
+
+            return response(['message' => 'Not Found'], 404);
+        }
+
         $checkCount = LimitIp::where('ip', $ipAddress)->first();
 
         if ($checkCount && $checkCount->count >= 4) {
 
             Log::info("ip $ipAddress vượt quá 4 lần --takemission");
 
+            $badIp = BadIp::where('ip', $ipAddress)->first();
+
             $redirectorCheck = Redirector::where('slug', $slug)->first();
+
+            if ($badIp)
+            {
+                $badIp->increment('count');
+
+            } else {
+                BadIp::create(['ip' => $ipAddress, 'count' => 1, 'user_id' => $redirectorCheck ? $redirectorCheck->created_by : null]);
+            }
+
 
             if ($redirectorCheck) {
 
