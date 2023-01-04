@@ -549,6 +549,9 @@ class ConsoleController extends Controller
                 ->when($fromDate !== '' && $toDate !== '', function ($query) use ($fromDate, $toDate) {
                     return $query->whereBetween('trackers.created_at', [$fromDate, $toDate]);
                 })
+                ->when($userId, function ($query) use ($userId) {
+                    return $query->where('trackers.redirector_user_id', $userId);
+                })
                 ->orderBy($orderBy, $order)->paginate($perPage);
 
         return $items;
