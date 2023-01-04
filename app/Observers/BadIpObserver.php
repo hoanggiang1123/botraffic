@@ -12,7 +12,7 @@ class BadIpObserver
 {
     public function updated(BadIp $badIp)
     {
-        if ($badIp->count >= 4) {
+        if ($badIp->count >= 2) {
 
             $trackers = Tracker::where('ip', $badIp->ip)->orderBy('created_at', 'desc')->limit(8)->get();
 
