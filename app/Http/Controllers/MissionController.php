@@ -444,7 +444,7 @@ class MissionController extends Controller
             ->where('traffic_count', '>', 0)
             ->when(is_array($notAllowDomains) && count($notAllowDomains) > 0, function($query) use($notAllowDomains) {
                 $query->whereNotIn('domain', $notAllowDomains);
-            })->orderBy('created_at', 'asc')
+            })->orderBy('created_at', 'desc')
             ->first();
 
 
