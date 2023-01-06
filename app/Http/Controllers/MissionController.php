@@ -23,6 +23,8 @@ use Illuminate\Support\Facades\Log;
 
 use Illuminate\Support\Str;
 
+use Illuminate\Support\Facades\Cache;
+
 class MissionController extends Controller
 {
     protected $model;
@@ -252,7 +254,7 @@ class MissionController extends Controller
 
             if ($redirectorCheck) {
 
-                return response(['url' => $redirectorCheck->url]);
+                return response(['url' => $redirectorCheck->alternative_link ? $redirectorCheck->alternative_link : $redirectorCheck->url]);
             }
 
             return response(['message' => 'Not Found'], 404);
@@ -260,7 +262,7 @@ class MissionController extends Controller
 
         $checkCount = LimitIp::where('ip', $ipAddress)->first();
 
-        if ($checkCount && $checkCount->count >= 4) {
+        if ($checkCount && $checkCount->count >= 2) {
 
             Log::info("ip $ipAddress vượt quá 4 lần --takemission");
 
@@ -400,6 +402,8 @@ class MissionController extends Controller
                 'mission' => $mission->load('keyword'),
                 'anchor' =>  $internalLink ? $internalLink->anchor_text : null
             ];
+        } else {
+
         }
 
         $redirectorCheck = Redirector::where('slug', $slug)->first();
@@ -413,6 +417,203 @@ class MissionController extends Controller
 
         return response(['message' => 'Not Found'], 404);
 
+    }
+
+
+    public function takeMissionVerOne(Request $request)
+    {
+        $ipAddress = $request->ip_address ? $request->ip_address : '';
+        $slug = $request->slug ? $request->slug : '';
+
+        if (!$ipAddress) {
+            Log::info('Missing Ip address --takemission');
+            return response(['message' => 'Not Found'], 404);
+        };
+
+        $this->checkBlockIp($ipAddress, $slug);
+
+        $this->checkLimitMissionPerDay($ipAddress, $slug);
+
+        $this->checkExistMission($ipAddress, $slug);
+
+        $notAllowDomains = $this->getAllowDomains( $ipAddress );
+
+        $keyword = Keyword::query()
+            ->where('status', 1)
+            ->where('approve', 1)
+            ->where('traffic_count', '>', 0)
+            ->when(is_array($notAllowDomains) && count($notAllowDomains) > 0, function($query) use($notAllowDomains) {
+                $query->whereNotIn('domain', $notAllowDomains);
+            })
+            ->first();
+
+
+        if ($keyword)
+        {
+
+            $keyword->decrement('traffic_count');
+
+            $internalLink = null;
+
+            if ($keyword->internal === 1) {
+
+                $internalLink = \App\Models\InternalLink::where('keyword_id', $keyword->id)->where('status', 1)->inRandomOrder()->first();
+            }
+
+            $mission = $this->model->create([
+                'keyword_id' => $keyword->id,
+                'status' => 0,
+                'ip' => $ipAddress,
+                'created_by' => auth()->user() && auth()->user()->id ? auth()->user()->id : null,
+                'internal_link_id' => $internalLink ? $internalLink->id : null
+            ]);
+
+            return [
+                'mission' => $mission->load('keyword'),
+                'anchor' =>  $internalLink ? $internalLink->anchor_text : null
+            ];
+        }
+
+        $redirectorCheck = Redirector::where('slug', $slug)->first();
+
+        if ($redirectorCheck) {
+            Log::info("Hết nhiệm vụ, không có nhiệm vụ, hết count $ipAddress, $slug --takemission");
+            return response(['url' => $redirectorCheck->alternative_link ? $redirectorCheck->alternative_link : $redirectorCheck->url]);
+        }
+
+        Log::info("Không tồn tại slug: $slug --takemission");
+
+        return response(['message' => 'Not Found'], 404);
+
+    }
+
+    public function checkBlockIp($ipAddress, $slug)
+    {
+        $block = BlockIp::where('ip', $ipAddress)->first();
+
+        if ($block) {
+
+            Log::info("ip $ipAddress in black list --takemission");
+
+            $redirectorCheck = Redirector::where('slug', $slug)->first();
+
+            if ($redirectorCheck) {
+
+                return response(['url' => $redirectorCheck->alternative_link ? $redirectorCheck->alternative_link : $redirectorCheck->url]);
+            }
+
+            return response(['message' => 'Not Found'], 404);
+        }
+    }
+
+    public function checkLimitMissionPerDay($ipAddress, $slug)
+    {
+        $checkCount = LimitIp::where('ip', $ipAddress)->first();
+
+        if ($checkCount && $checkCount->count >= 2) {
+
+            Log::info("ip $ipAddress vượt quá 2 lần --takemission");
+
+            $badIp = BadIp::where('ip', $ipAddress)->first();
+
+            $redirectorCheck = Redirector::where('slug', $slug)->first();
+
+            if ($badIp)
+            {
+                $badIp->increment('count');
+
+            } else {
+                BadIp::create(['ip' => $ipAddress, 'count' => 1, 'user_id' => $redirectorCheck ? $redirectorCheck->created_by : null]);
+            }
+
+
+            if ($redirectorCheck) {
+
+                return response(['url' => $redirectorCheck->url]);
+            }
+
+            return response(['message' => 'Not Found'], 404);
+        }
+    }
+
+    public function checkExistMission($ipAddress, $slug)
+    {
+        $mission = $this->model->with('keyword')
+            ->where('ip', $ipAddress)
+            ->where('status', 0)
+            ->first();
+
+        if ($mission) {
+
+            if ($mission->keyword) {
+
+                $keywordCheck = Keyword::where('id', $mission->keyword->id)->first();
+
+                if ($keywordCheck && $keywordCheck->status === 1) {
+
+                    $internalLink = null;
+
+                    if ($keywordCheck->internal === 1) {
+
+                        $internalLink = \App\Models\InternalLink::where('id', $mission->internal_link_id)->where('status', 1)->first();
+
+                        if (!$mission->internal_link_id) {
+                            if ($internalLink)
+                            {
+                                $mission->internal_link_id = $internalLink->id;
+                                $mission->save();
+
+                            }
+                        }
+
+                    }
+
+                    return [
+                        'mission' => $mission,
+                        'anchor' => $internalLink ? $internalLink->anchor_text : null
+                    ];
+                }
+                else if ($keywordCheck->status === 0) {
+                    Log::info("Từ khóa đã xóa hoặc status === 0, $ipAddress --takemission");
+                    $mission->delete();
+                    // return reponse(['message' => 'Not Found'], 404);
+                }
+            }
+            else {
+                $mission->delete();
+                // return reponse(['message' => 'Not Found'], 404);
+                Log::info("Từ khóa không tồn tại, $ipAddress --takemission");
+            }
+        }
+    }
+
+    public function getAllowDomains ( $ipAddress )
+    {
+        $totalDomain = Cache::get('total_domain');
+
+        $domains = Cache::get( $ipAddress );
+
+        if ( is_array( $domains ) && count( $domains ) >= $totalDomain) {
+
+            Cache::forget( $ipAddress );
+
+            return [];
+        }
+
+        return is_array( $domains ) && count( $domains ) > 0 ? $domains : [];
+    }
+
+    public function setNotAllowDomains( $ipAddress, $domain )
+    {
+        $domains = Cache::get( $ipAddress );
+
+        if( is_array( $domains ) && count( $domains ) > 0 ) {
+            $domains[] = $domain;
+
+            Cache::put($ipAddress, $domains);
+        }
+
+        Cache::put($ipAddress, [$domain]);
     }
 
     public function getHostNameFromUrl ($input) {
@@ -551,6 +752,8 @@ class MissionController extends Controller
                     'os' => $os,
                     'user_id' => auth()->user() && auth()->user()->id ? auth()->user()->id : null
                 ]);
+
+                $this->setNotAllowDomains($ipAddress, $mission->keyword->domain);
 
                 $checkCount = LimitIp::where('ip', $ipAddress)->first();
 

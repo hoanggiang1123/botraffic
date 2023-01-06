@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Event;
 use App\Models\BadIp;
 use App\Observers\BadIpObserver;
 
+use App\Models\Keyword;
+use App\Observers\KeywordObserver;
+
 class EventServiceProvider extends ServiceProvider
 {
     /**
@@ -31,6 +34,7 @@ class EventServiceProvider extends ServiceProvider
     public function boot()
     {
         BadIp::observe(BadIpObserver::class);
+        Keyword::observe(KeywordObserver::class);
     }
 
     /**

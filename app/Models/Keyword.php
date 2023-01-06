@@ -121,4 +121,30 @@ class Keyword extends Model
         return $result;
     }
 
+    public function getHostNameFromUrl () {
+
+        $input = trim($this->url, '/');
+
+        if (!preg_match('#^http(s)?://#', $input)) {
+            $input = 'http://' . $input;
+        }
+
+        $urlParts = parse_url($input);
+
+        if (isset($urlParts['host'])) {
+            $domain_name = preg_replace('/^www\./', '', $urlParts['host']);
+
+            $check = explode('.', $domain_name);
+
+            if (count($check) > 2) {
+                return $check[1] . '.' . $check[2];
+            }
+
+            return $domain_name;
+        }
+
+        return '';
+
+    }
+
 }
