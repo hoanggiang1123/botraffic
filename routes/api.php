@@ -50,7 +50,7 @@ Route::group(['prefix' => 'redirector', 'middleware' => 'auth:sanctum'], functio
 
     Route::post('/redirect', [RedirectorController::class, 'redirect'])->withoutMiddleware('auth:sanctum');
 
-    Route::post('/get-mission', [MissionController::class, 'takeMissionNew'])->withoutMiddleware('auth:sanctum');
+    Route::post('/get-mission', [MissionController::class, 'takeMissionVerOne'])->withoutMiddleware('auth:sanctum');
 
     Route::post('/confirm-mission', [MissionController::class, 'getConfirmMission'])->withoutMiddleware('auth:sanctum');
 
@@ -82,7 +82,7 @@ Route::group(['prefix' => 'mission', 'middleware' => 'auth:sanctum'], function()
 
     Route::get('/script', [MissionController::class, 'getScript'])->withoutMiddleware('auth:sanctum');
 
-    Route::get('/take', [MissionController::class, 'takeMissionNew']);
+    Route::get('/take', [MissionController::class, 'takeMissionVerOne']);
 
     Route::get('/get', [MissionController::class, 'getMission']);
 
