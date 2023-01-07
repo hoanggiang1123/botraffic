@@ -14,9 +14,9 @@ class BadIpObserver
     {
         if ($badIp->count >= 1) {
 
-            $trackers = Tracker::where('ip', $badIp->ip)->orderBy('created_at', 'desc')->limit(8)->get();
+            $trackers = Tracker::where('ip', $badIp->ip)->orderBy('created_at', 'desc')->limit(4)->get();
 
-            if (count($trackers) === 8) {
+            if (count($trackers) === 4) {
 
                 $check = [];
 
