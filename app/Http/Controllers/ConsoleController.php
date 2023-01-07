@@ -541,7 +541,7 @@ class ConsoleController extends Controller
 
                     $join->on('trackers.keyword_id', '=', 'keywords.id');
 
-                })->join('internal_links', function($join) {
+                })->leftJoin('internal_links', function($join) {
 
                     $join->on('trackers.internal_link_id', '=', 'internal_links.id');
                 })
