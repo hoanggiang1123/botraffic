@@ -910,9 +910,59 @@ class MissionController extends Controller
             const anchor = document.querySelector(\'a[data-key="'. $id .'"]\');
             if (anchor) {
                 anchor.classList.add("linkhaybtn", "inside", "finish", "animate");
+
+                let check = false;
+                let time = Math.floor(Math.random() * (25 - 10) + 10);
+
+                anchor.addEventListener("click", function(e){
+                    if (!check) {
+                        e.preventDefault();
+
+                        const modal = document.createElement("div");
+                        modal.style.position = "fixed";
+                        modal.style.zIndex = 999999;
+                        modal.style.top = 0;
+                        modal.style.left = 0;
+                        modal.style.right = 0;
+                        modal.style.bottom = 0;
+                        modal.style.background = "rgba(0,0,0,0.8)";
+                        modal.style.display = "flex";
+                        modal.style.width = "100%";
+                        modal.style.height = "100%";
+                        modal.style.alignItems = "center";
+                        modal.style.justifyContent =  "center"
+
+                        const modalText = document.createElement("div");
+                        modalText.style.padding = "20px 50px";
+                        modalText.style.background = "white";
+                        modalText.style.color = "black";
+                        modalText.style.borderRadius = "10px";
+                        modalText.style.fontWeight = "600";
+
+                        modalText.textContent = "Vui lòng chờ " + time + " s";
+
+                        modal.appendChild(modalText);
+
+                        document.querySelector("body").appendChild(modal);
+
+                        let interVal = setInterval(function(){
+                            if (time <= 0) {
+                                modal.remove();
+                                check = true;
+                                clearTimeout(interVal);
+                            }
+                            else {
+                                time--;
+                                modalText.textContent =  "Vui lòng chờ " + time + " s";
+                            }
+
+                        }, 1000);
+
+                    }
+
+                });
             }
         ';
-
         return \response($script)->header('Content-Type', 'application/javascript');
     }
 
