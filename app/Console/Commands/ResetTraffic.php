@@ -42,8 +42,14 @@ class ResetTraffic extends Command
             });
 
         DB::table('redirectors')->update(['total_click_perday' => 0]);
-        LimitIp::truncate();
+
         Mission::where('status', 1)->delete();
+
+        $resetArray = [2, 3, 4];
+        $randomKeys = array_rand($resetArray);
+        $reset = $resetArray[$randomKeys];
+        DB::table('limit_ips')->where('reset', $reset)->delete();
+
         Log::info('reset traffic success');
     }
 }

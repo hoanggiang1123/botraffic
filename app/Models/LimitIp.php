@@ -10,6 +10,6 @@ class LimitIp extends Model
     use HasFactory;
 
     protected $fillable = [
-        'ip', 'count'
+        'ip', 'count', 'reset'
     ];
 }

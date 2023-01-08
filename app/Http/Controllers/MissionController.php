@@ -759,7 +759,13 @@ class MissionController extends Controller
                     $checkCount->increment('count');
                 }
                 else {
-                    LimitIp::create(['ip' => $ipAddress, 'count' => 1]);
+                    $resetArray = [2, 3, 4];
+
+                    $randomKeys = array_rand($resetArray);
+
+                    $reset = $resetArray[$randomKeys];
+
+                    LimitIp::create(['ip' => $ipAddress, 'count' => 1, 'reset' => $reset]);
                 }
 
                 if ($mission->internal_link_id)
