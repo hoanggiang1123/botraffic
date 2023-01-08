@@ -14,6 +14,8 @@ use App\Http\Controllers\ConsoleController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\InternalLinkController;
+use App\Http\Controllers\CheckIpController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -164,3 +166,10 @@ Route::group(['prefix' => 'internal-link', 'middleware' => 'auth:sanctum'], func
 
     Route::post('/destroy', [InternalLinkController::class, 'destroy']);
 });
+
+Route::group(['prefix' => 'internal-link', 'middleware' => 'auth:sanctum'], function() {
+
+    Route::get('/{id}', [InternalLinkController::class, 'show']);
+});
+
+Route::get('/check-ip/{ip}', [CheckIpController::class, 'show']);

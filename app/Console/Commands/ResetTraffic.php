@@ -45,7 +45,7 @@ class ResetTraffic extends Command
 
         Mission::where('status', 1)->delete();
 
-        $resetArray = [2, 3, 4];
+        $resetArray = [1, 2, 3, 4];
         $randomKeys = array_rand($resetArray);
         $reset = $resetArray[$randomKeys];
         DB::table('limit_ips')->where('reset', $reset)->delete();

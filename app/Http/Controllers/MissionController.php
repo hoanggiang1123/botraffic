@@ -508,7 +508,7 @@ class MissionController extends Controller
     {
         $checkCount = LimitIp::where('ip', $ipAddress)->first();
 
-        if ($checkCount && $checkCount->count >= 2) {
+        if ($checkCount && $checkCount->count >= 1) {
 
             Log::info("ip $ipAddress vượt quá 2 lần --takemission");
 
@@ -759,7 +759,7 @@ class MissionController extends Controller
                     $checkCount->increment('count');
                 }
                 else {
-                    $resetArray = [2, 3, 4];
+                    $resetArray = [1, 2, 3, 4];
 
                     $randomKeys = array_rand($resetArray);
 
