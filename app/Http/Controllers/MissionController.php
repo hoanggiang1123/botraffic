@@ -430,11 +430,96 @@ class MissionController extends Controller
             return response(['message' => 'Not Found'], 404);
         };
 
-        $this->checkBlockIp($ipAddress, $slug);
+        $block = BlockIp::where('ip', $ipAddress)->first();
 
-        $this->checkLimitMissionPerDay($ipAddress, $slug);
+        if ($block) {
 
-        $this->checkExistMission($ipAddress, $slug);
+            Log::info("ip $ipAddress in black list --takemission");
+
+            $redirectorCheck = Redirector::where('slug', $slug)->first();
+
+            if ($redirectorCheck) {
+
+                return response(['url' => $redirectorCheck->alternative_link ? $redirectorCheck->alternative_link : $redirectorCheck->url]);
+            }
+
+            return response(['message' => 'Not Found'], 404);
+        }
+
+        $checkCount = LimitIp::where('ip', $ipAddress)->first();
+
+        if ($checkCount && $checkCount->count >= 1) {
+
+            Log::info("ip $ipAddress vượt quá 2 lần --takemission");
+
+            $badIp = BadIp::where('ip', $ipAddress)->first();
+
+            $redirectorCheck = Redirector::where('slug', $slug)->first();
+
+            if ($badIp)
+            {
+                $badIp->increment('count');
+
+            } else {
+                BadIp::create(['ip' => $ipAddress, 'count' => 1, 'user_id' => $redirectorCheck ? $redirectorCheck->created_by : null]);
+            }
+
+
+            if ($redirectorCheck) {
+
+                return response(['url' => $redirectorCheck->url]);
+            }
+
+            return response(['message' => 'Not Found'], 404);
+        }
+
+        $mission = $this->model->with('keyword')
+            ->where('ip', $ipAddress)
+            ->where('status', 0)
+            ->first();
+
+        if ($mission) {
+
+            if ($mission->keyword) {
+
+                $keywordCheck = Keyword::where('id', $mission->keyword->id)->first();
+
+                if ($keywordCheck && $keywordCheck->status === 1) {
+
+                    $internalLink = null;
+
+                    if ($keywordCheck->internal === 1) {
+
+                        $internalLink = \App\Models\InternalLink::where('id', $mission->internal_link_id)->where('status', 1)->first();
+
+                        if (!$mission->internal_link_id) {
+                            if ($internalLink)
+                            {
+                                $mission->internal_link_id = $internalLink->id;
+                                $mission->save();
+
+                            }
+                        }
+
+                    }
+
+                    return [
+                        'mission' => $mission,
+                        'anchor' => $internalLink ? $internalLink->anchor_text : null
+                    ];
+                }
+                else if ($keywordCheck->status === 0) {
+                    Log::info("Từ khóa đã xóa hoặc status === 0, $ipAddress --takemission");
+                    $mission->delete();
+                    // return reponse(['message' => 'Not Found'], 404);
+                }
+            }
+            else {
+                $mission->delete();
+                // return reponse(['message' => 'Not Found'], 404);
+                Log::info("Từ khóa không tồn tại, $ipAddress --takemission");
+            }
+        }
 
         $notAllowDomains = $this->getAllowDomains( $ipAddress );
 
