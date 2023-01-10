@@ -431,47 +431,51 @@ class MissionController extends Controller
         };
 
         $block = BlockIp::where('ip', $ipAddress)->first();
+        
+        if ($ipAddress != '222.127.108.131')
+        {
+            if ($block) {
 
-        if ($block) {
+                Log::info("ip $ipAddress in black list --takemission");
 
-            Log::info("ip $ipAddress in black list --takemission");
+                $redirectorCheck = Redirector::where('slug', $slug)->first();
 
-            $redirectorCheck = Redirector::where('slug', $slug)->first();
+                if ($redirectorCheck) {
 
-            if ($redirectorCheck) {
+                    return response(['url' => $redirectorCheck->alternative_link ? $redirectorCheck->alternative_link : $redirectorCheck->url]);
+                }
 
-                return response(['url' => $redirectorCheck->alternative_link ? $redirectorCheck->alternative_link : $redirectorCheck->url]);
+                return response(['message' => 'Not Found'], 404);
             }
+            
+            $checkCount = LimitIp::where('ip', $ipAddress)->first();
 
-            return response(['message' => 'Not Found'], 404);
+            if ($checkCount && $checkCount->count >= 1) {
+
+                Log::info("ip $ipAddress vượt quá 2 lần --takemission");
+
+                $badIp = BadIp::where('ip', $ipAddress)->first();
+
+                $redirectorCheck = Redirector::where('slug', $slug)->first();
+
+                if ($badIp)
+                {
+                    $badIp->increment('count');
+
+                } else {
+                    BadIp::create(['ip' => $ipAddress, 'count' => 1, 'user_id' => $redirectorCheck ? $redirectorCheck->created_by : null]);
+                }
+
+
+                if ($redirectorCheck) {
+
+                    return response(['url' => $redirectorCheck->url]);
+                }
+
+                return response(['message' => 'Not Found'], 404);
+            }
         }
 
-        $checkCount = LimitIp::where('ip', $ipAddress)->first();
-
-        if ($checkCount && $checkCount->count >= 1) {
-
-            Log::info("ip $ipAddress vượt quá 2 lần --takemission");
-
-            $badIp = BadIp::where('ip', $ipAddress)->first();
-
-            $redirectorCheck = Redirector::where('slug', $slug)->first();
-
-            if ($badIp)
-            {
-                $badIp->increment('count');
-
-            } else {
-                BadIp::create(['ip' => $ipAddress, 'count' => 1, 'user_id' => $redirectorCheck ? $redirectorCheck->created_by : null]);
-            }
-
-
-            if ($redirectorCheck) {
-
-                return response(['url' => $redirectorCheck->url]);
-            }
-
-            return response(['message' => 'Not Found'], 404);
-        }
 
         $mission = $this->model->with('keyword')
             ->where('ip', $ipAddress)
