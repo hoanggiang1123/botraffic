@@ -479,7 +479,7 @@ class MissionController extends Controller
 
         $redirectorCheck = Redirector::where('slug', $slug)->first();
 
-        $createdBy = $redirectorCheck->created_by ? $redirectorCheck->created_by : null;
+        $createdBy = $redirectorCheck && $redirectorCheck->created_by ? $redirectorCheck->created_by : null;
 
         $keyword = Keyword::query()
             ->where('status', 1)
