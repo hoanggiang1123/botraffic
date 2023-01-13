@@ -32,6 +32,8 @@ class KeywordController extends Controller
 
         if (isset($data['traffic'])) $data['traffic_count'] = $data['traffic'];
 
+        if (isset($data['url'])) $data['domain'] = $this->getHostNameFromUrl($data['url']);
+
         if (auth()->user()->role !== 'admin' && isset($data['approve'])) {
 
             unset($data['approve']);
@@ -60,6 +62,32 @@ class KeywordController extends Controller
         }
 
         return response(['message' => 'Unprocess Entity'], 422);
+    }
+
+    public function getHostNameFromUrl ($input) {
+
+        $input = trim($input, '/');
+
+        if (!preg_match('#^http(s)?://#', $input)) {
+            $input = 'http://' . $input;
+        }
+
+        $urlParts = parse_url($input);
+
+        if (isset($urlParts['host'])) {
+            $domain_name = preg_replace('/^www\./', '', $urlParts['host']);
+
+            $check = explode('.', $domain_name);
+
+            if (count($check) > 2) {
+                return $check[1] . '.' . $check[2];
+            }
+
+            return $domain_name;
+        }
+
+        return '';
+
     }
 
     public function update (MainRequest $request, $id) {

@@ -430,10 +430,12 @@ class MissionController extends Controller
             return response(['message' => 'Not Found'], 404);
         };
 
-        $block = BlockIp::where('ip', $ipAddress)->first();
+
 
         if ($ipAddress != '222.127.108.131')
         {
+            $block = BlockIp::where('ip', $ipAddress)->first();
+
             if ($block) {
 
                 Log::info("ip $ipAddress in black list --takemission");
@@ -452,28 +454,18 @@ class MissionController extends Controller
 
             if ($checkCount && $checkCount->count >= 1) {
 
-                Log::info("ip $ipAddress vượt quá 2 lần --takemission");
-
-                $badIp = BadIp::where('ip', $ipAddress)->first();
+                Log::info("ip $ipAddress vượt quá 1 lần --takemission");
 
                 $redirectorCheck = Redirector::where('slug', $slug)->first();
 
-                if ($badIp)
-                {
-                    $badIp->increment('count');
-
-                } else {
-                    BadIp::create(['ip' => $ipAddress, 'count' => 1, 'user_id' => $redirectorCheck ? $redirectorCheck->created_by : null]);
-                }
-
-
                 if ($redirectorCheck) {
 
-                    return response(['url' => $redirectorCheck->url]);
+                    return response(['url' => $redirectorCheck->alternative_link ? $redirectorCheck->alternative_link : $redirectorCheck->url]);
                 }
 
                 return response(['message' => 'Not Found'], 404);
             }
+
 
             if (!$this->isSameDevice($ipAddress, $request->header('user-agent')))
             {
@@ -483,7 +475,7 @@ class MissionController extends Controller
 
                 if ($redirectorCheck) {
 
-                    return response(['url' => $redirectorCheck->url]);
+                    return response(['url' => $redirectorCheck->alternative_link ? $redirectorCheck->alternative_link : $redirectorCheck->url]);
                 }
 
                 return response(['message' => 'Not Found'], 404);
@@ -510,7 +502,8 @@ class MissionController extends Controller
 
                         $internalLink = \App\Models\InternalLink::where('id', $mission->internal_link_id)->where('status', 1)->first();
 
-                        if (!$mission->internal_link_id) {
+                        if (!$mission->internal_link_id)
+                        {
                             if ($internalLink)
                             {
                                 $mission->internal_link_id = $internalLink->id;
@@ -518,7 +511,6 @@ class MissionController extends Controller
 
                             }
                         }
-
                     }
 
                     return [
@@ -526,20 +518,25 @@ class MissionController extends Controller
                         'anchor' => $internalLink ? $internalLink->anchor_text : null
                     ];
                 }
-                else if ($keywordCheck->status === 0) {
+                else if ($keywordCheck->status === 0)
+                {
                     Log::info("Từ khóa đã xóa hoặc status === 0, $ipAddress --takemission");
+
                     $mission->delete();
-                    // return reponse(['message' => 'Not Found'], 404);
                 }
             }
             else {
                 $mission->delete();
-                // return reponse(['message' => 'Not Found'], 404);
+
                 Log::info("Từ khóa không tồn tại, $ipAddress --takemission");
             }
         }
 
         $notAllowDomains = $this->getAllowDomains( $ipAddress );
+
+        $redirectorCheck = Redirector::where('slug', $slug)->first();
+
+        $createdBy = $redirectorCheck->created_by ? $redirectorCheck->created_by : null;
 
         $keyword = Keyword::query()
             ->where('status', 1)
@@ -547,11 +544,25 @@ class MissionController extends Controller
             ->where('traffic_count', '>', 0)
             ->when(is_array($notAllowDomains) && count($notAllowDomains) > 0, function($query) use($notAllowDomains) {
                 $query->whereNotIn('domain', $notAllowDomains);
-            })->inRandomOrder()->first();
+            })
+            ->when($createdBy, function($query) use ($createdBy){
+                $query->where('created_by', $createdBy);
+            })
+            ->inRandomOrder()->first();
+
+        if (!$keyword) {
+            $keyword = Keyword::query()
+            ->where('status', 1)
+            ->where('approve', 1)
+            ->where('traffic_count', '>', 0)
+            ->when(is_array($notAllowDomains) && count($notAllowDomains) > 0, function($query) use($notAllowDomains) {
+                $query->whereNotIn('domain', $notAllowDomains);
+            })
+            ->inRandomOrder()->first();
+        }
 
         if ($keyword)
         {
-
             $keyword->decrement('traffic_count');
 
             $internalLink = null;
