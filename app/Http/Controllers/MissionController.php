@@ -431,7 +431,7 @@ class MissionController extends Controller
         };
 
         $block = BlockIp::where('ip', $ipAddress)->first();
-        
+
         if ($ipAddress != '222.127.108.131')
         {
             if ($block) {
@@ -447,7 +447,7 @@ class MissionController extends Controller
 
                 return response(['message' => 'Not Found'], 404);
             }
-            
+
             $checkCount = LimitIp::where('ip', $ipAddress)->first();
 
             if ($checkCount && $checkCount->count >= 1) {
@@ -466,6 +466,20 @@ class MissionController extends Controller
                     BadIp::create(['ip' => $ipAddress, 'count' => 1, 'user_id' => $redirectorCheck ? $redirectorCheck->created_by : null]);
                 }
 
+
+                if ($redirectorCheck) {
+
+                    return response(['url' => $redirectorCheck->url]);
+                }
+
+                return response(['message' => 'Not Found'], 404);
+            }
+
+            if (!$this->isSameDevice($ipAddress, $request->header('user-agent')))
+            {
+                $redirectorCheck = Redirector::where('slug', $slug)->first();
+
+                Log::info("ip $ipAddress not use same devices --takemission");
 
                 if ($redirectorCheck) {
 
@@ -572,6 +586,26 @@ class MissionController extends Controller
 
         return response(['message' => 'Not Found'], 404);
 
+    }
+
+    public function isSameDevice($ipAddress, $userAgent) {
+
+        $check = false;
+
+        $device = \App\Models\Device::where('ip', $ipAddress)->first();
+
+        if ($device)
+        {
+            if ($device->user_agent == $userAgent)
+            {
+                $check = true;
+            }
+
+        } else {
+            $check = true;
+        }
+
+        return $check;
     }
 
     public function checkBlockIp($ipAddress, $slug)
@@ -878,6 +912,17 @@ class MissionController extends Controller
                     $redirector->increment('total_click');
 
                     $tracker->update(['redirector_id' => $redirector->id, 'redirector_user_id' => $redirector->created_by]);
+
+                    $device = \App\Models\Device::where('ip', $ipAddress)->first();
+
+                    if (!$device)
+                    {
+                        \App\Models\Device::create([
+                            'ip' => $ipAddress,
+                            'user_agent' => $request->header('user-agent'),
+                            'redirector_user_id' => $redirector->id
+                        ]);
+                    }
 
                     DB::commit();
 
