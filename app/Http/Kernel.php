@@ -63,5 +63,10 @@ class Kernel extends HttpKernel
         'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
+        'check.emptyinput' => \App\Http\Middleware\CheckEmptyInput::class,
+        'check.whitelist' => \App\Http\Middleware\CheckWhiteList::class,
+        'check.blockip' => \App\Http\Middleware\CheckBlockIp::class,
+        'check.limitip' => \App\Http\Middleware\CheckLimitIp::class,
+        'check.samedevice' => \App\Http\Middleware\CheckIsSameDevice::class,
     ];
 }
