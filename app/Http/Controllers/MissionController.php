@@ -661,7 +661,7 @@ class MissionController extends Controller
 
             $createdBy = $redirector ? $redirector->created_by : 'N/A';
 
-            if (!$ipAddress || !$code) {
+            if (!$ipAddress || !$code || !$redirector) {
 
                 Log::info("Không tồn tại ip hoặc code --getConfirm");
 
