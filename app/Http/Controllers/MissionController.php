@@ -568,8 +568,9 @@ class MissionController extends Controller
 
             Cache::put($ipAddress, $domains);
         }
-
-        Cache::put($ipAddress, [$domain]);
+        else {
+            Cache::put($ipAddress, [$domain]);
+        }
     }
 
     public function getHostNameFromUrl ($input) {
