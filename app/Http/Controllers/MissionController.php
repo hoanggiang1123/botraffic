@@ -636,7 +636,7 @@ class MissionController extends Controller
 
                 if ($checkLink === rtrim($domain, '/')) {
 
-                    Log::info('embed match');
+                    Log::info('embed match '.$ipAddress . ' '. $domain);
 
                     $code = uniqid();
 
