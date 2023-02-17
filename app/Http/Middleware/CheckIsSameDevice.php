@@ -24,7 +24,7 @@ class CheckIsSameDevice
 
         if ($device)
         {
-            if ($device->user_agent == $userAgent)
+            if ($device->user_agent == $request->ua)
             {
                 $check = true;
             }
