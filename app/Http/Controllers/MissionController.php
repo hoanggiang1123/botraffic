@@ -619,6 +619,8 @@ class MissionController extends Controller
 
         if ($missions && count($missions) > 0) {
 
+            Log::info('embed exist');
+
             foreach ($missions as $mission) {
 
                 $checkLink = rtrim($mission->keyword->url, '/');
@@ -633,6 +635,8 @@ class MissionController extends Controller
                 }
 
                 if ($checkLink === rtrim($domain, '/')) {
+
+                    Log::info('embed match');
 
                     $code = uniqid();
 
