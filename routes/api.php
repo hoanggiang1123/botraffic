@@ -107,7 +107,7 @@ Route::group(['prefix' => 'mission', 'middleware' => 'auth:sanctum'], function()
 
     Route::post('/destroy', [MissionController::class, 'destroy']);
 
-    Route::post('/start-mission', [MissionController::class, 'getStartMission'])->withoutMiddleware('auth:sanctum');
+    Route::get('/start-mission', [MissionController::class, 'getStartMission'])->withoutMiddleware('auth:sanctum');
 });
 
 Route::group(['prefix' => 'media', 'middleware' => 'auth:sanctum'], function() {
