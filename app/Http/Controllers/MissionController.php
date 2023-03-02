@@ -1003,7 +1003,7 @@ class MissionController extends Controller
             }
         }
 
-        return $status;
+        return response(['message' => $status], 200);
 
     }
 }
