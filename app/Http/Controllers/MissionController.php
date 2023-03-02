@@ -689,6 +689,15 @@ class MissionController extends Controller
                     return response(['message' => 'Not Found'], 404);
                 };
 
+                if ($mission->is_start == 1) {
+                    if (time() - strtotime($mission->updated_at) < 40) {
+
+                        Log::info("Xác nhận mã quá nhanh (bot) is_start $ipAddress, $slug, $code --getConfirm");
+
+                        return response(['message' => 'Not Found'], 404);
+                    };
+                }
+
                 $mission->update(['status' => 1]);
 
                 $keyword = Keyword::where('id', $mission->keyword->id)->first();
@@ -971,5 +980,30 @@ class MissionController extends Controller
             $ipAddress = $_SERVER['REMOTE_ADDR'];
         }
         return $ipAddress;
+    }
+
+    public function getStartMission(Request $request)
+    {
+        $ipAddress = $request->ip();
+
+        $domain = $request->domain;
+
+        if (!$ipAddress || !$domain) return response(['message' => 'Not Found'], 404);
+
+        $status = 'notok';
+
+        $mission = $this->model->with('keyword')->where('ip', $ipAddress)->where('status', 0)->first();
+
+        if ($mission && $mission->keyword && $mission->keyword->url) {
+
+            if (rtrim($mission->keyword->url, '/') === rtrim($domain, '/')) {
+
+                $status = 'ok';
+                $mission->update(['is_start' => 1]);
+            }
+        }
+
+        return $status;
+
     }
 }
