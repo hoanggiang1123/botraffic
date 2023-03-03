@@ -20,7 +20,7 @@ class CheckLimitIp
 
         $checkCount = LimitIp::where('ip', $request->ip_address)->first();
 
-        if ($checkCount && $checkCount->count >= 2) {
+        if ($checkCount && $checkCount->count >= config('app.limit_mission')) {
 
             Log::info("ip $request->ip_address vượt quá 1 lần --takemission");
 

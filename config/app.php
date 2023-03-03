@@ -58,6 +58,8 @@ return [
 
     'asset_url' => env('ASSET_URL'),
 
+    'limit_mission' => env('LIMIT_MISSION', 2),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone
