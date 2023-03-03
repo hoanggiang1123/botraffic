@@ -984,7 +984,7 @@ class MissionController extends Controller
 
     public function getStartMission(Request $request)
     {
-        $ipAddress = $request->ip();
+        $ipAddress = $request->ip;
 
         $domain = $request->domain;
 
