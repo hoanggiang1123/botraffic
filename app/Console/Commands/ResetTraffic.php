@@ -34,7 +34,6 @@ class ResetTraffic extends Command
     public function handle()
     {
         Keyword::query()
-            ->where('status', 1)
             ->where('approve', 1)
             ->get()
             ->each(function($item) {
@@ -49,7 +48,7 @@ class ResetTraffic extends Command
         // $randomKeys = array_rand($resetArray);
         // $reset = $resetArray[$randomKeys];
         // DB::table('limit_ips')->where('reset', $reset)->delete();
-        
+
         LimitIp::truncate();
 
         Log::info('reset traffic success');
