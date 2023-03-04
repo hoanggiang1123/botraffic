@@ -60,6 +60,8 @@ return [
 
     'limit_mission' => env('LIMIT_MISSION', 2),
 
+    'check_device' => env('CHECK_DEVICE', 1),
+
     /*
     |--------------------------------------------------------------------------
     | Application Timezone

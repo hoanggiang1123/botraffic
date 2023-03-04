@@ -18,6 +18,8 @@ class CheckIsSameDevice
 
         if ($request->next) return $next($request);
 
+        if(config('app.check_device') != 1) return $next($request);
+
         $check = false;
 
         $device = Device::where('ip', $request->ip_address)->first();
