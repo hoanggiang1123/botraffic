@@ -53,7 +53,7 @@ Route::group(['prefix' => 'redirector', 'middleware' => 'auth:sanctum'], functio
     Route::post('/redirect', [RedirectorController::class, 'redirect'])->withoutMiddleware('auth:sanctum');
 
     Route::post('/get-mission', [MissionController::class, 'takeMissionVerOne'])->withoutMiddleware('auth:sanctum')->middleware([
-        'check.emptyinput', 'check.whitelist', 'check.blockip', 'check.limitip', 'check.samedevice'
+        'check.emptyinput', 'check.whitelist', 'check.blockip', 'check.limitip'
     ]);
 
     Route::post('/confirm-mission', [MissionController::class, 'getConfirmMission'])->withoutMiddleware('auth:sanctum');
