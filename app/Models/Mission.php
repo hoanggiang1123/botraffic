@@ -12,7 +12,7 @@ class Mission extends Model
     use HasFactory;
 
     protected $fillable = [
-        'ip', 'keyword_id', 'status', 'code', 'created_by', 'internal_link_id'
+        'ip', 'keyword_id', 'status', 'code', 'created_by', 'internal_link_id', 'is_start'
     ];
 
     public function keyword () {
