@@ -22,7 +22,7 @@ class CheckLimitIp
 
         if ($checkCount && $checkCount->count >= (int) config('app.limit_mission')) {
 
-            Log::info("ip $request->ip_address vượt quá 1 lần --takemission");
+            Log::info("ip $request->ip_address vượt quá 3 lần --takemission");
 
             $redirectorCheck = Redirector::where('slug', $request->slug)->first();
 

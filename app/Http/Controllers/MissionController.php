@@ -634,7 +634,7 @@ class MissionController extends Controller
 
                 if ($checkLink === rtrim($domain, '/')) {
 
-                    $code = uniqid();
+                    $code = Str::random(6);
 
                     $mission->update(['code' => $code]);
 
@@ -798,6 +798,18 @@ class MissionController extends Controller
 
             }
             Log::info("Mã không chính xác --getConfirm $ipAddress, $slug, $code, tạo bởi $createdBy");
+
+            $badIp = BadIp::where('ip', $ipAddress)->first();
+
+            if ($badIp) {
+
+                $badIp->increment('count');
+            }
+            else {
+
+                BadIp::create(['ip' => $ipAddress, 'count' => 1, 'user_id' => $createdBy]);
+            }
+
             return response(['message' => 'Mã không chính xác'], 401);
 
         } catch (\Exception $err) {
