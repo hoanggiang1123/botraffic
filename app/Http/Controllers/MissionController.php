@@ -690,7 +690,7 @@ class MissionController extends Controller
                 };
 
                 if ($mission->is_start == 1) {
-                    if (time() - strtotime($mission->updated_at) < 40) {
+                    if (time() - strtotime($mission->updated_at) < 35) {
 
                         Log::info("Xác nhận mã quá nhanh (bot) is_start $ipAddress, $slug, $code --getConfirm");
 
