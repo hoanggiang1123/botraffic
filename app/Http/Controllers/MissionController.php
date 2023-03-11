@@ -1029,6 +1029,7 @@ class MissionController extends Controller
         if (!$ipAddress || !$domain) return response(['message' => 'Not Found'], 404);
 
         $status = 'notok';
+        $code = '';
 
         $mission = $this->model->with('keyword')->where('ip', $ipAddress)->where('status', 0)->first();
 
@@ -1037,10 +1038,11 @@ class MissionController extends Controller
             if (rtrim($mission->keyword->url, '/') === rtrim($domain, '/')) {
 
                 $status = 'ok';
+                $code = $mission->code;
             }
         }
 
-        return response(['message' => $status], 200);
+        return response(['message' => $status, 'code' => $code], 200);
 
     }
 }
