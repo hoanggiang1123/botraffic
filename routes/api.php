@@ -86,6 +86,9 @@ Route::group(['prefix' => 'mission', 'middleware' => 'auth:sanctum'], function()
 
     Route::get('/start-mission', [MissionController::class, 'getStartMission'])->withoutMiddleware('auth:sanctum');
 
+    Route::get('/check-mission', [MissionController::class, 'getCheckMission'])->withoutMiddleware('auth:sanctum');
+
+
     Route::get('/script', [MissionController::class, 'getScript'])->withoutMiddleware('auth:sanctum');
 
     Route::get('/take', [MissionController::class, 'takeMissionVerOne']);

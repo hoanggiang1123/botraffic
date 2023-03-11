@@ -1018,4 +1018,29 @@ class MissionController extends Controller
         return response(['message' => $status], 200);
 
     }
+
+
+    public function getCheckMission(Request $request)
+    {
+        $ipAddress = $request->ip;
+
+        $domain = $request->domain;
+
+        if (!$ipAddress || !$domain) return response(['message' => 'Not Found'], 404);
+
+        $status = 'notok';
+
+        $mission = $this->model->with('keyword')->where('ip', $ipAddress)->where('status', 0)->first();
+
+        if ($mission && $mission->keyword && $mission->keyword->url) {
+
+            if (rtrim($mission->keyword->url, '/') === rtrim($domain, '/')) {
+
+                $status = 'ok';
+            }
+        }
+
+        return response(['message' => $status], 200);
+
+    }
 }
