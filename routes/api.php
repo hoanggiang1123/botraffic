@@ -154,6 +154,7 @@ Route::group(['prefix' => 'bank', 'middleware' => 'auth:sanctum'], function() {
 });
 
 Route::group(['prefix' => 'user', 'middleware' => 'auth:sanctum'], function() {
+    Route::get('/select', [UserController::class, 'select']);
     Route::get('/search', [UserController::class, 'search']);
     Route::get('/api', [UserController::class, 'api']);
     Route::put('/{id}', [UserController::class, 'update']);

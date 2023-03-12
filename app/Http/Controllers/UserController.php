@@ -33,6 +33,10 @@ class UserController extends Controller
 
     }
 
+    public function select(Request $request) {
+        return $this->model->get();
+    }
+
     public function api () {
         $user = $this->model->where('id', auth()->user()->id)->first();
 
