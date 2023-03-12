@@ -626,6 +626,8 @@ class MissionController extends Controller
 
         if ($mission) {
 
+            $checkTime = 38;
+
             if (time() - strtotime($mission->updated_at) < $checkTime) {
 
                 Log::info("Xác nhận mã quá nhanh (bot) $ipAddress, $slug, $code --getConfirm");
