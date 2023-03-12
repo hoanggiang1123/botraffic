@@ -630,7 +630,7 @@ class MissionController extends Controller
 
             if (time() - strtotime($mission->updated_at) < $checkTime) {
 
-                Log::info("Xác nhận mã quá nhanh (bot) $ipAddress, $slug, $code --getConfirm");
+                Log::info("Xác nhận mã quá nhanh (bot) $ipAddress --getMissionCode");
 
                 return response(['message' => 'Not Found'], 404);
             };
