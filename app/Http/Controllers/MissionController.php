@@ -626,15 +626,6 @@ class MissionController extends Controller
 
         if ($mission) {
 
-            $checkTime = 10;
-
-            if (time() - strtotime($mission->updated_at) < $checkTime) {
-
-                Log::info("Xác nhận mã quá nhanh (bot) $ipAddress --getMissionCode");
-
-                return response(['message' => 'Not Found'], 404);
-            };
-
             $checkLink = rtrim($mission->keyword->url, '/');
 
             if ($mission->internal_link_id) {
@@ -691,7 +682,7 @@ class MissionController extends Controller
 
             if ($mission && $mission->keyword && $mission->keyword->status === 1) {
 
-                $checkTime = $mission->internal_link_id ? 10 : 50;
+                // $checkTime = $mission->internal_link_id ? 10 : 50;
 
                 // if (time() - strtotime($mission->updated_at) < $checkTime) {
 
@@ -1014,6 +1005,7 @@ class MissionController extends Controller
         if (!$ipAddress || !$domain) return response(['message' => 'Not Found'], 404);
 
         $status = 'notok';
+        $ua = '';
 
         $mission = $this->model->with('keyword')->where('ip', $ipAddress)->where('status', 0)->first();
 
@@ -1022,11 +1014,12 @@ class MissionController extends Controller
             if (rtrim($mission->keyword->url, '/') === rtrim($domain, '/')) {
 
                 $status = 'ok';
-                $mission->update(['is_start' => 1]);
+                $ua = uniqid();
+                $mission->update(['is_start' => 1, 'ua' => $ua]);
             }
         }
 
-        return response(['message' => $status], 200);
+        return response(['message' => $status, 'ua' => $ua], 200);
 
     }
 
