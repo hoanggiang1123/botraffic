@@ -622,34 +622,36 @@ class MissionController extends Controller
             return response(['message' => 'Not Found'], 404);
         }
 
-        $missions = $this->model->with('keyword')->where('ip', $ipAddress)->where('status', 0)->get();
+        $mission = $this->model->with('keyword')->where('ip', $ipAddress)->where('status', 0)->first();
 
-        if ($missions && count($missions) > 0) {
+        if ($mission) {
 
-            foreach ($missions as $mission) {
+            if (time() - strtotime($mission->updated_at) < $checkTime) {
 
-                $checkLink = rtrim($mission->keyword->url, '/');
+                Log::info("Xác nhận mã quá nhanh (bot) $ipAddress, $slug, $code --getConfirm");
 
-                if ($mission->internal_link_id) {
+                return response(['message' => 'Not Found'], 404);
+            };
 
-                    $internalLink = \App\Models\InternalLink::where('id', $mission->internal_link_id)->first();
+            $checkLink = rtrim($mission->keyword->url, '/');
 
-                    $checkLink = rtrim($internalLink->link, '/');
+            if ($mission->internal_link_id) {
 
-                    $internal = true;
-                }
+                $internalLink = \App\Models\InternalLink::where('id', $mission->internal_link_id)->first();
 
-                if ($checkLink === rtrim($domain, '/')) {
+                $checkLink = rtrim($internalLink->link, '/');
 
-                    $code = Str::random(6);
+                $internal = true;
+            }
 
-                    $mission->update(['code' => $code]);
+            if ($checkLink === rtrim($domain, '/')) {
 
-                    break;
-                }
+                $code = Str::random(6);
 
+                $mission->update(['code' => $code]);
             }
         }
+
 
         return response(['code' => $code, 'internal' => $internal]);
     }
@@ -689,21 +691,21 @@ class MissionController extends Controller
 
                 $checkTime = $mission->internal_link_id ? 10 : 50;
 
-                if (time() - strtotime($mission->updated_at) < $checkTime) {
+                // if (time() - strtotime($mission->updated_at) < $checkTime) {
 
-                    Log::info("Xác nhận mã quá nhanh (bot) $ipAddress, $slug, $code --getConfirm");
+                //     Log::info("Xác nhận mã quá nhanh (bot) $ipAddress, $slug, $code --getConfirm");
 
-                    return response(['message' => 'Not Found'], 404);
-                };
+                //     return response(['message' => 'Not Found'], 404);
+                // };
 
-                if ($mission->is_start == 1) {
-                    if (time() - strtotime($mission->updated_at) < 35) {
+                // if ($mission->is_start == 1) {
+                //     if (time() - strtotime($mission->updated_at) < 35) {
 
-                        Log::info("Xác nhận mã quá nhanh (bot) is_start $ipAddress, $slug, $code --getConfirm");
+                //         Log::info("Xác nhận mã quá nhanh (bot) is_start $ipAddress, $slug, $code --getConfirm");
 
-                        return response(['message' => 'Not Found'], 404);
-                    };
-                }
+                //         return response(['message' => 'Not Found'], 404);
+                //     };
+                // }
 
                 $mission->update(['status' => 1]);
 
