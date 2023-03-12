@@ -626,7 +626,7 @@ class MissionController extends Controller
 
         if ($mission) {
 
-            $checkTime = 38;
+            $checkTime = 10;
 
             if (time() - strtotime($mission->updated_at) < $checkTime) {
 
