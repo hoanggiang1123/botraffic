@@ -1052,4 +1052,8 @@ class MissionController extends Controller
         return response(['message' => $status, 'code' => $code], 200);
 
     }
+
+    public function checkIp(Request $request) {
+        return $request->ip();
+    }
 }
