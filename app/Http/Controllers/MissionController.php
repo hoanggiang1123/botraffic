@@ -608,13 +608,6 @@ class MissionController extends Controller
 
         $domain = $request->domain ? $request->domain : '';
 
-        $ua = $request->ua ? $request->ua : '';
-
-        if ($ua === '') {
-            Log::info('Curl: ' . $ipAddress);
-            return response(['code' => Str::random(6), 'internal' => false]);
-        }
-
         if (!$ipAddress || !$domain) {
 
             Log::info('Không tồn tại ip hoặc tên miền --getCode');
@@ -625,6 +618,11 @@ class MissionController extends Controller
         $mission = $this->model->with('keyword')->where('ip', $ipAddress)->where('status', 0)->first();
 
         if ($mission) {
+
+            if($mission->ua != $ua) {
+                Log::info('Curl: ' . $ipAddress);
+                return response(['code' => Str::random(6), 'internal' => false]);
+            }
 
             $checkLink = rtrim($mission->keyword->url, '/');
 
