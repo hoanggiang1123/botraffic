@@ -1026,7 +1026,7 @@ class MissionController extends Controller
 
     public function getCheckMission(Request $request)
     {
-        $ipAddress = $request->ip;
+        $ipAddress = $request->ip();
 
         $domain = $request->domain;
 
@@ -1046,7 +1046,7 @@ class MissionController extends Controller
             }
         }
 
-        return response(['message' => $status, 'code' => $code], 200);
+        return response(['message' => $status, 'code' => $code, 'ip' => $ipAddress], 200);
 
     }
 
