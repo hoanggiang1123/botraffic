@@ -608,6 +608,8 @@ class MissionController extends Controller
 
         $domain = $request->domain ? $request->domain : '';
 
+        $ua = $request->ua ? $request->ua : '';
+
         if (!$ipAddress || !$domain) {
 
             Log::info('Không tồn tại ip hoặc tên miền --getCode');
