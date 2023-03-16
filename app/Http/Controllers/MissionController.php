@@ -623,6 +623,7 @@ class MissionController extends Controller
 
             if($mission->ua != $ua) {
                 Log::info('Curl: ' . $ipAddress);
+                \App\Models\BlockIp::create(['ip' => $ipAddress]);
                 return response(['code' => Str::random(6), 'internal' => false]);
             }
 
