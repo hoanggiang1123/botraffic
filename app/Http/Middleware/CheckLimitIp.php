@@ -18,8 +18,6 @@ class CheckLimitIp
 
         if ($request->next) return $next($request);
 
-        if ($request->ip_address == '222.127.108.167') return $next($request);
-
         $checkCount = LimitIp::where('ip', $request->ip_address)->first();
 
         if ($checkCount && $checkCount->count >= (int) config('app.limit_mission')) {
