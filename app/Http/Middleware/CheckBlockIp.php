@@ -34,21 +34,21 @@ class CheckBlockIp
             return response(['message' => 'Not Found'], 404);
         }
 
-        // $block = BlockIp::where('ip', $request->ip_address)->first();
+        $block = BlockIp::where('ip', $request->ip_address)->first();
 
-        // if ($block) {
+        if ($block) {
 
-        //     Log::info("ip $request->ip_address in black list --takemission");
+            Log::info("ip $request->ip_address in black list --takemission");
 
-        //     $redirectorCheck = Redirector::where('slug', $request->slug)->first();
+            $redirectorCheck = Redirector::where('slug', $request->slug)->first();
 
-        //     if ($redirectorCheck) {
+            if ($redirectorCheck) {
 
-        //         return response(['url' => $redirectorCheck->alternative_link ? $redirectorCheck->alternative_link : $redirectorCheck->url]);
-        //     }
+                return response(['url' => $redirectorCheck->alternative_link ? $redirectorCheck->alternative_link : $redirectorCheck->url]);
+            }
 
-        //     return response(['message' => 'Not Found'], 404);
-        // }
+            return response(['message' => 'Not Found'], 404);
+        }
 
         return $next($request);
     }
