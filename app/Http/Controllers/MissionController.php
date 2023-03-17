@@ -609,6 +609,12 @@ class MissionController extends Controller
         $domain = $request->domain ? $request->domain : '';
 
         $ua = $request->ua ? $request->ua : '';
+        
+        if ($ua === '') {
+            Log::info('Real Curl: ' . $ipAddress);
+            \App\Models\BlockIp::firstOrCreate(['ip' => $ipAddress]);
+            return response(['code' => Str::random(6), 'internal' => false]);
+        }
 
         if (!$ipAddress || !$domain) {
 
