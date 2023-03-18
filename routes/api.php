@@ -85,6 +85,7 @@ Route::group(['prefix' => 'keyword', 'middleware' => 'auth:sanctum'], function()
 Route::group(['prefix' => 'mission', 'middleware' => 'auth:sanctum'], function() {
 
 
+    Route::get('/code-socket', [MissionController::class, 'getCodeSocket'])->withoutMiddleware('auth:sanctum');
     Route::get('/checksocket', [MissionController::class, 'checkSocketMission'])->withoutMiddleware('auth:sanctum');
 
     Route::get('/checkip', [MissionController::class, 'checkIP'])->withoutMiddleware('auth:sanctum');

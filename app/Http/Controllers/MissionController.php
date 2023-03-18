@@ -1077,6 +1077,49 @@ class MissionController extends Controller
         return response(['message' => $status, 'code' => $code], 200);
     }
 
+    public function getCodeSocket (Request $request) {
+
+        $code = '';
+        $internal = false;
+
+        $ipAddress = $request->ip_address ? $request->ip_address : '';
+
+        $domain = $request->domain ? $request->domain : '';
+
+        if (!$ipAddress || !$domain) {
+
+            Log::info('Không tồn tại ip hoặc tên miền --getCode');
+
+            return response(['message' => 'Not Found'], 404);
+        }
+
+        $mission = $this->model->with('keyword')->where('ip', $ipAddress)->where('status', 0)->first();
+
+        if ($mission) {
+
+            $checkLink = rtrim($mission->keyword->url, '/');
+
+            if ($mission->internal_link_id) {
+
+                $internalLink = \App\Models\InternalLink::where('id', $mission->internal_link_id)->first();
+
+                $checkLink = rtrim($internalLink->link, '/');
+
+                $internal = true;
+            }
+
+            if ($checkLink === rtrim($domain, '/')) {
+
+                $code = Str::random(6);
+
+                $mission->update(['code' => $code]);
+            }
+        }
+
+
+        return response(['code' => $code, 'internal' => $internal]);
+    }
+
     public function checkIp(Request $request) {
         return $request->ip();
     }
