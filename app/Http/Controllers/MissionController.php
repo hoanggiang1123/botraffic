@@ -1060,7 +1060,7 @@ class MissionController extends Controller
 
     public function checkSocketMission(Request $request) {
 
-        $ip = $request->ip;
+        $ipAddress = $request->ip;
 
         $status = 'notok';
         $code = '';
