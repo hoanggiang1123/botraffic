@@ -1057,6 +1057,26 @@ class MissionController extends Controller
 
     }
 
+
+    public function checkSocketMission(Request $request) {
+
+        $ip = $request->ip;
+
+        $status = 'notok';
+        $code = '';
+
+        if ($ip) {
+            $mission = $this->model->with('keyword')->where('ip', $ipAddress)->where('status', 0)->first();
+
+            if ($mission) {
+                $status = 'ok';
+                $code = $mission->code;
+            }
+        }
+
+        return response(['message' => $status, 'code' => $code], 200);
+    }
+
     public function checkIp(Request $request) {
         return $request->ip();
     }
