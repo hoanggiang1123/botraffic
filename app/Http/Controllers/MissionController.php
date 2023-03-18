@@ -1065,7 +1065,7 @@ class MissionController extends Controller
         $status = 'notok';
         $code = '';
 
-        if ($ip) {
+        if ($ipAddress) {
             $mission = $this->model->with('keyword')->where('ip', $ipAddress)->where('status', 0)->first();
 
             if ($mission) {
