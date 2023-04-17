@@ -15,6 +15,7 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\InternalLinkController;
 use App\Http\Controllers\CheckIpController;
+use App\Http\Controllers\UserIpController;
 
 
 /*
@@ -188,3 +189,10 @@ Route::group(['prefix' => 'internal-link', 'middleware' => 'auth:sanctum'], func
 });
 
 Route::get('/check-ip/{ip}', [CheckIpController::class, 'show']);
+
+
+Route::group(['prefix' => 'uip', 'middleware' => 'auth:sanctum'], function() {
+
+    Route::get('/', [UserIpController::class, 'index']);
+    Route::post('/', [UserIpController::class, 'store'])->withoutMiddleware('auth:sanctum');
+});
