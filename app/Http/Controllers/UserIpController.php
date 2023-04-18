@@ -66,4 +66,60 @@ class UserIpController extends Controller
     // }
 
 
+    public function export(Request $request) {
+
+        $orderBy = isset($params['order_by']) ? $params['order_by'] : 'created_at';
+
+        $order = isset($params['order']) ? $params['order'] : 'desc';
+
+        $hostname = isset($params['hostname']) ? $params['hostname'] : '';
+
+        $link = isset($params['link']) ? $params['link'] : '';
+
+        $fromDate = isset($params['from_date']) ? $params['from_date'] : '';
+
+        $toDate = isset($params['to_date']) ? $params['to_date'] : '';
+
+
+        $resp = self::query()
+
+
+        ->when($hostname !== '', function ($query) use ($hostname) {
+
+            return $query->where('hostname', 'like', '%' . $hostname . '%');
+
+        })
+
+        ->when($link !== '', function ($query) use ($link) {
+
+            return $query->where('link', 'like', '%' . $link . '%');
+
+        })
+
+        ->when($fromDate !== '' && $toDate !== '', function ($query) use ($fromDate, $toDate) {
+
+            return $query->whereBetween('created_at', [$fromDate, $toDate]);
+
+        })
+
+        ->orderBy($orderBy, $order)->get();
+
+
+        try {
+
+            $exel = new ConsoleExport($resp);
+
+            Storage::delete('public/excel/userip.xlsx');
+
+            Excel::store($exel, 'public/excel/userip.xlsx');
+
+            return '/storage/excel/userip.xlsx?time=' . time();
+
+        } catch (\Exception $e) {
+            return response(['message' => $e->getMessage()]);
+        }
+
+    }
+
+
 }

@@ -195,4 +195,6 @@ Route::group(['prefix' => 'uip', 'middleware' => 'auth:sanctum'], function() {
 
     Route::get('/', [UserIpController::class, 'index']);
     Route::post('/', [UserIpController::class, 'store'])->withoutMiddleware('auth:sanctum');
+
+    Route::get('/export', [UserIpController::class, 'export']);
 });
