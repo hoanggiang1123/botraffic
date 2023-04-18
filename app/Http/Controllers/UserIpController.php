@@ -8,6 +8,11 @@ use App\Models\UserIp;
 
 use Browser;
 
+use App\Exports\UserIpExport;
+
+use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
+
 class UserIpController extends Controller
 {
     protected $model;
@@ -81,7 +86,7 @@ class UserIpController extends Controller
         $toDate = isset($params['to_date']) ? $params['to_date'] : '';
 
 
-        $resp = self::query()
+        $resp = $this->model->query()
 
 
         ->when($hostname !== '', function ($query) use ($hostname) {
@@ -107,7 +112,7 @@ class UserIpController extends Controller
 
         try {
 
-            $exel = new ConsoleExport($resp);
+            $exel = new UserIpExport($resp);
 
             Storage::delete('public/excel/userip.xlsx');
 
