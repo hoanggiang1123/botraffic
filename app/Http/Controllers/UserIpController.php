@@ -33,7 +33,7 @@ class UserIpController extends Controller
             'screen' => $request->screen,
             'hostname' => $request->hostname,
             'link' => $request->link,
-            'user_agent' => $request->header('user-agent'),
+            // 'user_agent' => $request->header('user-agent'),
             'browser_version' => Browser::browserVersion(),
             'browser_name' => Browser::browserName(),
             'os_name' => Browser::platformName(),
