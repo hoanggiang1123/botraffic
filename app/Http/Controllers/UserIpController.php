@@ -109,6 +109,8 @@ class UserIpController extends Controller
 
         ->orderBy($orderBy, $order)->get();
 
+        return count($resp);
+
 
         try {
 
