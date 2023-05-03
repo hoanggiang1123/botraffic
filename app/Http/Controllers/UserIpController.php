@@ -12,6 +12,7 @@ use App\Exports\UserIpExport;
 
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
+use DB;
 
 class UserIpController extends Controller
 {
@@ -103,7 +104,7 @@ class UserIpController extends Controller
 
         ->when($fromDate !== '' && $toDate !== '', function ($query) use ($fromDate, $toDate) {
 
-            return $query->whereBetween('created_at', [$fromDate, $toDate]);
+            return $query->whereBetween(DB::raw('DATE(created_at)'), [$fromDate, $toDate]);
 
         })
 
