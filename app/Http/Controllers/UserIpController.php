@@ -74,6 +74,8 @@ class UserIpController extends Controller
 
     public function export(Request $request) {
 
+        $params = $request->all();
+
         $orderBy = isset($params['order_by']) ? $params['order_by'] : 'created_at';
 
         $order = isset($params['order']) ? $params['order'] : 'desc';
@@ -109,8 +111,6 @@ class UserIpController extends Controller
         })
 
         ->orderBy($orderBy, $order)->get();
-
-        return $fromDate;
 
 
         try {
